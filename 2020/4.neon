@@ -1,0 +1,68 @@
+IMPORT file
+IMPORT regex
+IMPORT string
+IMPORT sys
+
+LET lines := file.readLines(sys.args[1])
+LET records := buildRecords(lines)
+VAR count1 := 0
+VAR count2 := 0
+FOREACH r IN records DO
+    IF "byr" IN r AND "iyr" IN r AND "eyr" IN r AND "hgt" IN r AND "hcl" IN r AND "ecl" IN r AND "pid" IN r THEN
+        INC count1
+        IF 1920 <= num(r["byr"]) <= 2002 AND
+           2010 <= num(r["iyr"]) <= 2020 AND
+           2020 <= num(r["eyr"]) <= 2030 AND
+           validHeight(r["hgt"]) AND
+           regex.search("^#[0-9a-f]{6}$", r["hcl"], OUT _) AND
+           r["ecl"] IN ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"] AND
+           regex.search("^[0-9]{9}$", r["pid"], OUT _) THEN
+            INC count2
+        END IF
+    END IF
+END FOREACH
+print("\(count1)")
+print("\(count2)")
+
+FUNCTION buildRecords(rawlines: Array<String>): Array<Dictionary<String>>
+
+    FUNCTION processFields(fieldlines: Array<String>): Dictionary<String>
+        VAR r: Dictionary<String> := {}
+        FOREACH line IN fieldlines DO
+            FOREACH field IN string.split(line, " ") DO
+                LET a := string.split(field, ":")
+                r[a[0]] := a[1]
+            END FOREACH
+        END FOREACH
+        RETURN r
+    END FUNCTION
+
+    VAR recs: Array<Dictionary<String>> := []
+    VAR fields: Array<String> := []
+    FOREACH line IN rawlines DO
+        IF line <> "" THEN
+            fields.append(line)
+        ELSE
+            recs.append(processFields(fields))
+            fields := []
+        END IF
+    END FOREACH
+    IF fields.size() > 0 THEN
+        recs.append(processFields(fields))
+    END IF
+    RETURN recs
+END FUNCTION
+
+FUNCTION validHeight(hgt: String): Boolean
+    VAR m: regex.Match
+    CHECK regex.search(@"^(\d+)(cm|in)$", hgt, OUT m) ELSE
+        RETURN FALSE
+    END CHECK
+    CASE m[2].group
+        WHEN "cm" DO
+            RETURN 150 <= num(m[1].group) <= 193
+        WHEN "in" DO
+            RETURN 59 <= num(m[1].group) <= 76
+    END CASE
+    RETURN FALSE
+END FUNCTION

@@ -1,0 +1,48 @@
+IMPORT file
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    LET groups := splitGroups(lines)
+    VAR count1 := 0
+    VAR count2 := 0
+    FOREACH group IN groups DO
+        VAR questions: Dictionary<Boolean> := {}
+        FOREACH line IN group DO
+            FOREACH c IN line DO
+                questions[c] := TRUE
+            END FOREACH
+        END FOREACH
+        count1 := count1 + questions.size()
+        VAR all := group[0]
+        FOREACH line IN group DO
+            VAR intersection := ""
+            FOREACH c IN line DO
+                IF c IN all THEN
+                    intersection.append(c)
+                END IF
+            END FOREACH
+            all := intersection
+        END FOREACH
+        count2 := count2 + all.length()
+    END FOREACH
+    print("\(count1)")
+    print("\(count2)")
+END MAIN
+
+FUNCTION splitGroups(lines: Array<String>): Array<Array<String>>
+    VAR r: Array<Array<String>> := []
+    VAR group: Array<String> := []
+    FOREACH line IN lines DO
+        IF line <> "" THEN
+            group.append(line)
+        ELSIF group.size() > 0 THEN
+            r.append(group)
+            group := []
+        END IF
+    END FOREACH
+    IF group.size() > 0 THEN
+        r.append(group)
+    END IF
+    RETURN r
+END FUNCTION

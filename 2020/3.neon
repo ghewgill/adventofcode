@@ -1,0 +1,26 @@
+IMPORT file
+IMPORT sys
+
+VAR lines := file.readLines(sys.args[1])
+print("\(trees(3, 1))")
+VAR r := 1
+r := r * trees(1, 1)
+r := r * trees(3, 1)
+r := r * trees(5, 1)
+r := r * trees(7, 1)
+r := r * trees(1, 2)
+print("\(r)")
+
+FUNCTION trees(across, down: Number): Number
+    VAR count := 0
+    VAR line := 0
+    VAR pos := 0
+    WHILE line < lines.size() DO
+        IF lines[line][pos] = "#" THEN
+            INC count
+        END IF
+        pos := (pos + across) MOD lines[0].length()
+        line := line + down
+    END WHILE
+    RETURN count
+END FUNCTION

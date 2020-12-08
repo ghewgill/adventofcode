@@ -1,0 +1,34 @@
+IMPORT file
+IMPORT regex
+IMPORT sys
+
+LET lines := file.readLines(sys.args[1])
+VAR valid1 := 0
+VAR valid2 := 0
+FOREACH s IN lines DO
+    VAR m: regex.Match
+    IF regex.search(@"(\d+)-(\d+) (.): (.*)", s, OUT m) THEN
+        LET num1 := num(m[1].group)
+        LET num2 := num(m[2].group)
+        LET letter := m[3].group
+        LET password := m[4].group
+        IF num1 <= count(letter, password) <= num2 THEN
+            INC valid1
+        END IF
+        IF (password[num1-1] = letter) <> (password[num2-1] = letter) THEN
+            INC valid2
+        END IF
+    END IF
+END FOREACH
+print("\(valid1)")
+print("\(valid2)")
+
+FUNCTION count(letter, word: String): Number
+    VAR r := 0
+    FOREACH c IN word DO
+        IF c = letter THEN
+            INC r
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION

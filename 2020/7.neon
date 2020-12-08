@@ -1,0 +1,63 @@
+IMPORT file
+IMPORT string
+IMPORT sys
+
+TYPE Inner IS RECORD
+    count: Number
+    name: String
+END RECORD
+
+VAR holds: Dictionary<Array<Inner>> := {}
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    FOREACH s IN lines DO
+        LET i := string.find(s, "bags contain")
+        LET outer := s[FIRST TO i-2]
+        IF outer NOT IN holds THEN
+            holds[outer] := []
+        END IF
+        LET inners := string.split(s[i+13 TO LAST], ", ")
+        FOREACH inner IN inners DO
+            LET a := string.split(inner, " ")
+            IF a[0] <> "no" THEN
+                LET bag := "\(a[1]) \(a[2])"
+                holds[outer].append(Inner(count WITH num(a[0]), name WITH bag))
+            END IF
+        END FOREACH
+    END FOREACH
+    VAR count1 := 0
+    FOREACH inner IN holds.keys() DO
+        FOREACH b IN expand(inner) DO
+            IF b.name = "shiny gold" THEN
+                INC count1
+                EXIT FOREACH
+            END IF
+        END FOREACH
+    END FOREACH
+    print("\(count1)")
+    LET count2 := count("shiny gold")
+    print("\(count2)")
+END MAIN
+
+FUNCTION expand(name: String): Array<Inner>
+    CHECK name IN holds ELSE
+        RETURN []
+    END CHECK
+    VAR r: Array<Inner> := holds[name]
+    FOREACH inner IN holds[name] DO
+        r.extend(expand(inner.name))
+    END FOREACH
+    RETURN r
+END FUNCTION
+
+FUNCTION count(name: String): Number
+    CHECK name IN holds ELSE
+        RETURN 0
+    END CHECK
+    VAR r := 0
+    FOREACH inner IN holds[name] DO
+        r := r + inner.count * (1 + count(inner.name))
+    END FOREACH
+    RETURN r
+END FUNCTION

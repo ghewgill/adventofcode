@@ -1,0 +1,35 @@
+IMPORT base
+IMPORT file
+IMPORT string
+IMPORT sys
+
+LET lines := file.readLines(sys.args[1])
+VAR max := 0
+VAR seats: Array<Boolean> := []
+FOREACH line IN lines DO
+    LET s := translate(line, "FBLR", "0101")
+    LET n := base.fromBinary(s)
+    IF n > max THEN
+        max := n
+    END IF
+    seats[n] := TRUE
+END FOREACH
+print("\(max)")
+FOR i := 1 TO seats.size()-2 DO
+    IF NOT seats[i] AND seats[i-1] AND seats[i+1] THEN
+        print("\(i)")
+    END IF
+END FOR
+
+FUNCTION translate(s: String, fromChars, toChars: String): String
+    VAR r := ""
+    FOREACH c IN s DO
+        LET i := string.find(fromChars, c)
+        IF i >= 0 THEN
+            r.append(toChars[i])
+        ELSE
+            r.append(s[i])
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION
