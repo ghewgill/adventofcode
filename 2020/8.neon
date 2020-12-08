@@ -1,0 +1,53 @@
+IMPORT file
+IMPORT string
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    VAR acc: Number
+    _ := run(lines, OUT acc)
+    print("\(acc)")
+    FOR i := 0 TO lines.size()-1 DO
+        CASE lines[i][0 TO 2]
+            WHEN "nop" DO
+                VAR t := lines
+                t[i] := "jmp" & t[i][3 TO LAST]
+                IF run(t, OUT acc) THEN
+                    print("\(acc)")
+                END IF
+            WHEN "jmp" DO
+                VAR t := lines
+                t[i] := "nop" & t[i][3 TO LAST]
+                IF run(t, OUT acc) THEN
+                    print("\(acc)")
+                END IF
+        END CASE
+    END FOR
+END MAIN
+
+FUNCTION run(lines: Array<String>, OUT acc: Number): Boolean
+    VAR been: Array<Boolean> := []
+    acc := 0
+    VAR i := 0
+    LOOP
+        IF i = lines.size() THEN
+            RETURN TRUE
+        END IF
+        IF i < been.size() AND been[i] THEN
+            EXIT LOOP
+        END IF
+        been[i] := TRUE
+        LET a := string.split(lines[i], " ")
+        LET arg := (IF a[1][0] = "+" THEN num(a[1][1 TO LAST]) ELSE num(a[1]))
+        CASE a[0]
+            WHEN "nop" DO
+            WHEN "acc" DO
+                acc := acc + arg
+            WHEN "jmp" DO
+                i := i + arg
+                NEXT LOOP
+        END CASE
+        INC i
+    END LOOP
+    RETURN FALSE
+END FUNCTION
