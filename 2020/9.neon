@@ -1,0 +1,50 @@
+IMPORT file
+IMPORT math
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    VAR numbers: Array<Number> := []
+    FOREACH line IN lines DO
+        numbers.append(num(line))
+    END FOREACH
+    VAR r1 := 0
+    FOR i := 25 TO numbers.size()-1 DO
+        IF NOT sumofany(numbers[i-25 TO i-1], numbers[i]) THEN
+            r1 := numbers[i]
+        END IF
+    END FOR
+    print("\(r1)")
+    FOR i := numbers.size()-2 TO 0 STEP -1 LABEL start DO
+        FOR j := i+1 TO numbers.size()-1 DO
+            VAR r := 0
+            FOR k := j TO i STEP -1 DO
+                r := r + numbers[k]
+                IF r > r1 THEN
+                    NEXT start
+                END IF
+            END FOR
+            IF r = r1 THEN
+                VAR smallest := 1e100
+                VAR largest := 0
+                FOR k := i TO j DO
+                    smallest := math.min(numbers[k], smallest)
+                    largest := math.max(numbers[k], largest)
+                END FOR
+                print("\(smallest + largest)")
+                EXIT start
+            END IF
+        END FOR
+    END FOR
+END MAIN
+
+FUNCTION sumofany(numbers: Array<Number>, n: Number): Boolean
+    FOR i := 0 TO numbers.size()-2 DO
+        FOR j := i+1 TO numbers.size()-1 DO
+            IF numbers[i] + numbers[j] = n THEN
+                RETURN TRUE
+            END IF
+        END FOR
+    END FOR
+    RETURN FALSE
+END FUNCTION
