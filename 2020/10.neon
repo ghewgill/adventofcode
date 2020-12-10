@@ -1,0 +1,45 @@
+IMPORT file
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    VAR numbers: Array<Number> := [0]
+    FOREACH line IN lines DO
+        numbers.append(num(line))
+    END FOREACH
+    sort(INOUT numbers)
+    VAR diffs: Array<Number> := []
+    FOR i := 0 TO numbers.size()-2 DO
+        INC diffs[numbers[i+1]-numbers[i]]
+    END FOR
+    INC diffs[3]
+    print("\(diffs[1] * diffs[3])")
+    VAR count := 1
+    VAR inarow := 0
+    FOR i := 1 TO numbers.size()-2 DO
+        IF numbers[i-1] + 1 = numbers[i] = numbers[i+1] - 1 THEN
+            count := count * 2
+            INC inarow
+            IF inarow = 3 THEN
+                count := count INTDIV 8 * 7
+            END IF
+        ELSE
+            inarow := 0
+        END IF
+    END FOR
+    print("\(count)")
+END MAIN
+
+FUNCTION sort(INOUT numbers: Array<Number>)
+    REPEAT
+        VAR any := FALSE
+        FOR i := 0 TO numbers.size()-2 DO
+            IF numbers[i] > numbers[i+1] THEN
+                LET t := numbers[i]
+                numbers[i] := numbers[i+1]
+                numbers[i+1] := t
+                any := TRUE
+            END IF
+        END FOR
+    UNTIL NOT any
+END FUNCTION
