@@ -1,0 +1,137 @@
+IMPORT file
+IMPORT sys
+
+TYPE Place IS ENUM
+    wall
+    floor
+    seat
+    occupied
+END ENUM
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    VAR boundary: Array<Place> := []
+    FOR i := 1 TO 2+lines[0].length() DO
+        boundary.append(Place.wall)
+    END FOR
+    VAR grid: Array<Array<Place>> := [boundary]
+    FOREACH line IN lines DO
+        VAR row: Array<Place> := []
+        row.append(Place.wall)
+        FOREACH c IN line DO
+            IF c = "L" THEN
+                row.append(Place.seat)
+            ELSE
+                row.append(Place.floor)
+            END IF
+        END FOREACH
+        row.append(Place.wall)
+        grid.append(row)
+    END FOREACH
+    grid.append(boundary)
+    /*VAR grid1 := grid
+    LOOP
+        LET newgrid := iterate1(grid1)
+        IF newgrid = grid1 THEN
+            EXIT LOOP
+        END IF
+        grid1 := newgrid
+    END LOOP
+    print(str(count(grid1)))*/
+    VAR grid2 := grid
+    LOOP
+        LET newgrid := iterate2(grid2)
+        IF newgrid = grid2 THEN
+            EXIT LOOP
+        END IF
+        grid2 := newgrid
+    END LOOP
+    print(str(count(grid2)))
+END MAIN
+
+FUNCTION iterate1(grid: Array<Array<Place>>): Array<Array<Place>>
+    VAR newgrid := grid
+    FOR i := 1 TO grid.size()-2 DO
+        FOR j := 1 TO grid[i].size()-2 DO
+            VAR adjacent := 0
+            adjacent := adjacent + (IF grid[i-1][j-1] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i-1][j  ] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i-1][j+1] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i  ][j-1] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i  ][j+1] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i+1][j-1] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i+1][j  ] = Place.occupied THEN 1 ELSE 0)
+            adjacent := adjacent + (IF grid[i+1][j+1] = Place.occupied THEN 1 ELSE 0)
+            CASE grid[i][j]
+                WHEN Place.seat DO
+                    IF adjacent = 0 THEN
+                        newgrid[i][j] := Place.occupied
+                    END IF
+                WHEN Place.occupied DO
+                    IF adjacent >= 4 THEN
+                        newgrid[i][j] := Place.seat
+                    END IF
+                WHEN OTHERS DO
+                    -- skip
+            END CASE
+        END FOR
+    END FOR
+    RETURN newgrid
+END FUNCTION
+
+FUNCTION iterate2(grid: Array<Array<Place>>): Array<Array<Place>>
+    VAR newgrid := grid
+    FOR i := 1 TO grid.size()-2 DO
+        FOR j := 1 TO grid[i].size()-2 DO
+            VAR adjacent := 0
+            adjacent := adjacent + (IF visible(grid, i, j, -1, -1) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j, -1,  0) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j, -1, +1) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j,  0, -1) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j,  0, +1) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j, +1, -1) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j, +1,  0) THEN 1 ELSE 0)
+            adjacent := adjacent + (IF visible(grid, i, j, +1, +1) THEN 1 ELSE 0)
+            CASE grid[i][j]
+                WHEN Place.seat DO
+                    IF adjacent = 0 THEN
+                        newgrid[i][j] := Place.occupied
+                    END IF
+                WHEN Place.occupied DO
+                    IF adjacent >= 5 THEN
+                        newgrid[i][j] := Place.seat
+                    END IF
+                WHEN OTHERS DO
+                    -- skip
+            END CASE
+        END FOR
+    END FOR
+    RETURN newgrid
+END FUNCTION
+
+FUNCTION visible(grid: Array<Array<Place>>, i, j: Number, di, dj: Number): Boolean
+    VAR ti := i
+    VAR tj := j
+    LOOP
+        ti := ti + di
+        tj := tj + dj
+        IF grid[ti][tj] = Place.occupied THEN
+            RETURN TRUE
+        ELSIF grid[ti][tj] <> Place.floor THEN
+            EXIT LOOP
+        END IF
+    END LOOP
+    RETURN FALSE
+END FUNCTION
+
+FUNCTION count(grid: Array<Array<Place>>): Number
+    VAR r := 0
+    FOREACH row IN grid DO
+        FOREACH place IN row DO
+            IF place = Place.occupied THEN
+                INC r
+            END IF
+        END FOREACH
+    END FOREACH
+    RETURN r
+END FUNCTION
