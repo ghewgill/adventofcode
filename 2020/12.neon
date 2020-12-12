@@ -1,0 +1,100 @@
+IMPORT file
+IMPORT math
+IMPORT sys
+
+LET lines := file.readLines(sys.args[1])
+part1()
+part2()
+
+FUNCTION part1()
+    VAR x := 0
+    VAR y := 0
+    VAR t := 0
+    FOREACH line IN lines DO
+        LET d := num(line[1 TO LAST])
+        CASE line[0]
+            WHEN "N" DO
+                y := y + d
+            WHEN "S" DO
+                y := y - d
+            WHEN "E" DO
+                x := x + d
+            WHEN "W" DO
+                x := x - d
+            WHEN "L" DO
+                t := (t + d) MOD 360
+            WHEN "R" DO
+                t := (t - d) MOD 360
+            WHEN "F" DO
+                CASE t
+                    WHEN 0 DO
+                        x := x + d
+                    WHEN 90 DO
+                        y := y + d
+                    WHEN 180 DO
+                        x := x - d
+                    WHEN 270 DO
+                        y := y - d
+                    WHEN OTHERS DO
+                        ASSERT FALSE, t
+                END CASE
+        END CASE
+    END FOREACH
+    print("\(math.abs(x) + math.abs(y))")
+END FUNCTION
+
+FUNCTION part2()
+    VAR x := 0
+    VAR y := 0
+    VAR wx := 10
+    VAR wy := 1
+    FOREACH line IN lines DO
+        LET d := num(line[1 TO LAST])
+        CASE line[0]
+            WHEN "N" DO
+                wy := wy + d
+            WHEN "S" DO
+                wy := wy - d
+            WHEN "E" DO
+                wx := wx + d
+            WHEN "W" DO
+                wx := wx - d
+            WHEN "L" DO
+                CASE d
+                    WHEN 90 DO
+                        LET nwx := -wy
+                        LET nwy := wx
+                        wx := nwx
+                        wy := nwy
+                    WHEN 180 DO
+                        wx := -wx
+                        wy := -wy
+                    WHEN 270 DO
+                        LET nwx := wy
+                        LET nwy := -wx
+                        wx := nwx
+                        wy := nwy
+                END CASE
+            WHEN "R" DO
+                CASE d
+                    WHEN 90 DO
+                        LET nwx := wy
+                        LET nwy := -wx
+                        wx := nwx
+                        wy := nwy
+                    WHEN 180 DO
+                        wx := -wx
+                        wy := -wy
+                    WHEN 270 DO
+                        LET nwx := -wy
+                        LET nwy := wx
+                        wx := nwx
+                        wy := nwy
+                END CASE
+            WHEN "F" DO
+                x := x + wx * d
+                y := y + wy * d
+        END CASE
+    END FOREACH
+    print("\(math.abs(x) + math.abs(y))")
+END FUNCTION
