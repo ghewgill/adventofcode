@@ -1,0 +1,58 @@
+IMPORT file
+IMPORT string
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    part1(lines)
+    part2(lines[1])
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    LET arrival := num(lines[0])
+    LET a := string.split(lines[1], ",")
+    VAR buses: Array<Number> := []
+    FOREACH s IN a DO
+        IF s <> "x" THEN
+            buses.append(num(s))
+        END IF
+    END FOREACH
+    VAR t := arrival
+    LOOP
+        FOREACH b IN buses DO
+            IF t MOD b = 0 THEN
+                print(b * (t - arrival))
+                EXIT LOOP
+            END IF
+        END FOREACH
+        INC t
+    END LOOP
+END FUNCTION
+
+FUNCTION part2(targets: String)
+    LET a := string.split(targets, ",")
+    VAR buses: Array<Number> := []
+    FOREACH s IN a DO
+        IF s <> "x" THEN
+            buses.append(num(s))
+        ELSE
+            buses.append(0)
+        END IF
+    END FOREACH
+    VAR t := 0
+    VAR i := 0
+    VAR step := 1
+    WHILE i < buses.size() DO
+        IF (t + i) MOD buses[i] = 0 THEN
+            step := step * buses[i]
+            REPEAT
+                INC i
+                IF i >= buses.size() THEN
+                    EXIT WHILE
+                END IF
+            UNTIL buses[i] <> 0
+        END IF
+        t := t + step
+    END WHILE
+    print(t)
+END FUNCTION
