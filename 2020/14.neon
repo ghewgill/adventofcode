@@ -1,0 +1,89 @@
+IMPORT binary
+IMPORT file
+IMPORT math
+IMPORT string
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    part1(lines)
+    part2(lines)
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    VAR mask_and := 0
+    VAR mask_or := 0
+    VAR mem: Array<Number> := []
+    FOREACH line IN lines DO
+        IF string.hasPrefix(line, "mask") THEN
+            mask_and := 0
+            mask_or := 0
+            FOREACH c IN line[7 TO LAST] DO
+                mask_and := binary.shiftLeft64(mask_and, 1)
+                mask_or := binary.shiftLeft64(mask_or, 1)
+                IF c = "X" THEN
+                    mask_and := binary.or64(mask_and, 1)
+                ELSIF c = "1" THEN
+                    mask_or := binary.or64(mask_or, 1)
+                END IF
+            END FOREACH
+        ELSIF string.hasPrefix(line, "mem") THEN
+            LET addr := num(line[4 TO string.find(line, "]")-1])
+            LET value := num(line[string.find(line, " = ") + 3 TO LAST])
+            mem[addr] := binary.or64(binary.and64(value, mask_and), mask_or)
+        END IF
+    END FOREACH
+    VAR sum := 0
+    FOREACH m IN mem DO
+        sum := sum + m
+    END FOREACH
+    print(sum)
+END FUNCTION
+
+FUNCTION part2(lines: Array<String>)
+    VAR mask_float := 0
+    VAR mask_or := 0
+    VAR mem: Dictionary<Number> := {}
+    FOREACH line IN lines DO
+        IF string.hasPrefix(line, "mask") THEN
+            mask_float := 0
+            mask_or := 0
+            FOREACH c IN line[7 TO LAST] DO
+                mask_float := binary.shiftLeft64(mask_float, 1)
+                mask_or := binary.shiftLeft64(mask_or, 1)
+                IF c = "X" THEN
+                    mask_float := binary.or64(mask_float, 1)
+                ELSIF c = "1" THEN
+                    mask_or := binary.or64(mask_or, 1)
+                END IF
+            END FOREACH
+        ELSIF string.hasPrefix(line, "mem") THEN
+            VAR addr := num(line[4 TO string.find(line, "]")-1])
+            LET value := num(line[string.find(line, " = ") + 3 TO LAST])
+            addr := binary.and64(addr, binary.not64(mask_float))
+            addr := binary.or64(addr, mask_or)
+            VAR shifts: Array<Number> := []
+            VAR m := mask_float
+            VAR shift := 0
+            WHILE m > 0 DO
+                IF math.odd(m) THEN
+                    shifts.append(shift)
+                END IF
+                m := binary.shiftRight64(m, 1)
+                INC shift
+            END WHILE
+            FOR f := 0 TO 2^shifts.size()-1 DO
+                VAR a := addr
+                FOREACH s IN shifts INDEX i DO
+                    a := binary.or64(a, binary.shiftLeft64(binary.and64(binary.shiftRight64(f, i), 1), s))
+                END FOREACH
+                mem[str(a)] := value
+            END FOR
+        END IF
+    END FOREACH
+    VAR sum := 0
+    FOREACH a IN mem.keys() DO
+        sum := sum + mem[a]
+    END FOREACH
+    print(sum)
+END FUNCTION
