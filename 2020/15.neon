@@ -1,0 +1,24 @@
+CONSTANT Input := [1, 0, 15, 2, 10, 13]
+
+VAR seen: Array<Number> := []
+VAR i := 1
+FOREACH x IN Input DO
+    seen[x] := i
+    INC i
+END FOREACH
+VAR prev := Input[LAST]
+WHILE i <= 30_000_000 DO
+    VAR next: Number
+    IF prev >= seen.size() OR seen[prev] = 0 THEN
+        next := 0
+    ELSE
+        next := (i-1) - seen[prev]
+    END IF
+    seen[prev] := i-1
+    prev := next
+    INC i
+    IF i = 1+2020 THEN
+        print(prev)
+    END IF
+END WHILE
+print(prev)
