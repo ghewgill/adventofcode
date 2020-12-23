@@ -1,0 +1,132 @@
+IMPORT file
+IMPORT multiarray
+IMPORT sys
+
+CONSTANT Iterations := 6
+
+LET lines := file.readLines(sys.args[1])
+LET dim := lines.size() + 2*(Iterations+1)
+LET c := dim INTDIV 2
+LET o := (dim - lines.size()) INTDIV 2
+part1()
+part2()
+
+FUNCTION part1()
+    VAR a := multiarray.makeBoolean3D(dim, dim, dim)
+    FOR i := 0 TO lines.size()-1 DO
+        FOR j := 0 TO lines[i].length()-1 DO
+            a[c, o+i, o+j] := lines[i][j] = "#"
+        END FOR
+    END FOR
+    FOR t := 1 TO Iterations DO
+        VAR newa := a
+        FOR i := 1 TO dim-2 DO
+            FOR j := 1 TO dim-2 DO
+                FOR k := 1 TO dim-2 DO
+                    VAR n := 0
+                    FOR ii := i-1 TO i+1 DO
+                        FOR jj := j-1 TO j+1 DO
+                            FOR kk := k-1 TO k+1 DO
+                                IF (ii <> i OR jj <> j OR kk <> k) AND a[ii, jj, kk] THEN
+                                    INC n
+                                END IF
+                            END FOR
+                        END FOR
+                    END FOR
+                    IF a[i, j, k] THEN
+                        IF n NOT IN [2, 3] THEN
+                            newa[i, j, k] := FALSE
+                        END IF
+                    ELSE
+                        IF n = 3 THEN
+                            newa[i, j, k] := TRUE
+                        END IF
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+        a := newa
+    END FOR
+    VAR r := 0
+    FOR i := 0 TO dim-1 DO
+        FOR j := 0 TO dim-1 DO
+            FOR k := 0 TO dim-1 DO
+                IF a[i, j, k] THEN
+                    INC r
+                END IF
+            END FOR
+        END FOR
+    END FOR
+    print(r)
+END FUNCTION
+
+FUNCTION part2()
+    VAR a := makeBoolean4D(dim, dim, dim, dim)
+    FOR i := 0 TO lines.size()-1 DO
+        FOR j := 0 TO lines[i].length()-1 DO
+            a[c, c, o+i, o+j] := lines[i][j] = "#"
+        END FOR
+    END FOR
+    FOR t := 1 TO Iterations DO
+        VAR newa := a
+        FOR i := 1 TO dim-2 DO
+            FOR j := 1 TO dim-2 DO
+                FOR k := 1 TO dim-2 DO
+                    FOR l := 1 TO dim-2 DO
+                        VAR n := 0
+                        FOR ii := i-1 TO i+1 DO
+                            FOR jj := j-1 TO j+1 DO
+                                FOR kk := k-1 TO k+1 DO
+                                    FOR ll := l-1 TO l+1 DO
+                                        IF (ii <> i OR jj <> j OR kk <> k OR ll <> l) AND a[ii, jj, kk, ll] THEN
+                                            INC n
+                                        END IF
+                                    END FOR
+                                END FOR
+                            END FOR
+                        END FOR
+                        IF a[i, j, k, l] THEN
+                            IF n NOT IN [2, 3] THEN
+                                newa[i, j, k, l] := FALSE
+                            END IF
+                        ELSE
+                            IF n = 3 THEN
+                                newa[i, j, k, l] := TRUE
+                            END IF
+                        END IF
+                    END FOR
+                END FOR
+            END FOR
+        END FOR
+        a := newa
+    END FOR
+    VAR r := 0
+    FOR i := 0 TO dim-1 DO
+        FOR j := 0 TO dim-1 DO
+            FOR k := 0 TO dim-1 DO
+                FOR l := 0 TO dim-1 DO
+                    IF a[i, j, k, l] THEN
+                        INC r
+                    END IF
+                END FOR
+            END FOR
+        END FOR
+    END FOR
+    print(r)
+END FUNCTION
+
+TYPE ArrayBoolean4D IS Array<Array<Array<Array<Boolean>>>>
+FUNCTION makeBoolean4D(rows, columns, depth, z: Number): ArrayBoolean4D
+    VAR r: ArrayBoolean4D := []
+    r.resize(rows)
+    FOR i := 0 TO rows-1 DO
+        r[i].resize(columns)
+        FOR j := 0 TO columns-1 DO
+            r[i][j].resize(depth)
+            FOR k := 0 TO depth-1 DO
+                r[i][j][k].resize(z)
+            END FOR
+        END FOR
+    END FOR
+    RETURN r
+END FUNCTION
