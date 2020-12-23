@@ -1,0 +1,136 @@
+IMPORT file
+IMPORT regex
+IMPORT string
+IMPORT sys
+
+TYPE Range IS RECORD
+    low: Number
+    high: Number
+END RECORD
+
+TYPE Field IS RECORD
+    name: String
+    valid: Array<Range>
+END RECORD
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    VAR i := 0
+    VAR fields: Array<Field> := []
+    WHILE lines[i] <> "" DO
+        VAR m: regex.Match
+        IF regex.search(@"(.*): (\d+)-(\d+) or (\d+)-(\d+)$", lines[i], OUT m) THEN
+            LET name := m[1].group
+            VAR f := Field(name WITH name, valid WITH [
+                Range(
+                    low WITH num(m[2].group),
+                    high WITH num(m[3].group)
+                ),
+                Range(
+                    low WITH num(m[4].group),
+                    high WITH num(m[5].group)
+                )
+            ])
+            fields.append(f)
+        ELSE
+            ASSERT FALSE
+        END IF
+        INC i
+    END WHILE
+    INC i
+    ASSERT lines[i] = "your ticket:"
+    INC i
+    LET your := readTicket(lines[i])
+    INC i
+    INC i
+    ASSERT lines[i] = "nearby tickets:"
+    INC i
+    VAR nearby: Array<Array<Number>> := []
+    WHILE i < lines.size() DO
+        nearby.append(readTicket(lines[i]))
+        INC i
+    END WHILE
+    part1(fields, nearby)
+    part2(fields, your, nearby)
+END MAIN
+
+FUNCTION part1(fields: Array<Field>, nearby: Array<Array<Number>>)
+    VAR sum := 0
+    FOREACH ticket IN nearby DO
+        FOREACH x IN ticket DO
+            VAR any := FALSE
+            FOREACH f IN fields DO
+                IF f.valid[0].low <= x <= f.valid[0].high OR f.valid[1].low <= x <= f.valid[1].high THEN
+                    any := TRUE
+                END IF
+            END FOREACH
+            IF NOT any THEN
+                sum := sum + x
+            END IF
+        END FOREACH
+    END FOREACH
+    print(sum)
+END FUNCTION
+
+FUNCTION part2(fields: Array<Field>, your: Array<Number>, nearby: Array<Array<Number>>)
+    VAR valid: Array<Array<Number>> := []
+    VAR field_columns: Array<Dictionary<Boolean>> := []
+    FOR f := 0 TO fields.size()-1 DO
+        VAR d: Dictionary<Boolean> := {}
+        FOR t := 0 TO fields.size()-1 DO
+            d[str(t)] := TRUE
+        END FOR
+        field_columns.append(d)
+    END FOR
+    FOREACH ticket IN nearby LABEL check_ticket DO
+        FOREACH x IN ticket INDEX ci DO
+            VAR any := FALSE
+            FOREACH f IN fields DO
+                IF f.valid[0].low <= x <= f.valid[0].high OR f.valid[1].low <= x <= f.valid[1].high THEN
+                    any := TRUE
+                END IF
+            END FOREACH
+            IF NOT any THEN
+                NEXT check_ticket
+            END IF
+            FOREACH f IN fields INDEX fi DO
+                IF NOT (f.valid[0].low <= x <= f.valid[0].high OR f.valid[1].low <= x <= f.valid[1].high) THEN
+                    field_columns[fi].remove(str(ci))
+                END IF
+            END FOREACH
+        END FOREACH
+        valid.append(ticket)
+    END FOREACH
+    VAR solved_column: Array<Number> := []
+    LOOP
+        FOREACH fc IN field_columns INDEX fci DO
+            IF fc.size() = 1 AND fci NOT IN solved_column THEN
+                solved_column.append(fci)
+                LET col := fc.keys()[0]
+                FOR i := 0 TO field_columns.size()-1 DO
+                    IF field_columns[i].size() > 1 THEN
+                        field_columns[i].remove(col)
+                    END IF
+                END FOR
+                NEXT LOOP
+            END IF
+        END FOREACH
+        EXIT LOOP
+    END LOOP
+    VAR r := 1
+    FOREACH f IN fields INDEX i DO
+        IF string.hasPrefix(f.name, "departure") THEN
+            r := r * your[num(field_columns[i].keys()[0])]
+        END IF
+    END FOREACH
+    print(r)
+END FUNCTION
+
+FUNCTION readTicket(s: String): Array<Number>
+    LET a := string.split(s, ",")
+    VAR r: Array<Number> := []
+    FOREACH x IN a DO
+        r.append(num(x))
+    END FOREACH
+    RETURN r
+END FUNCTION
