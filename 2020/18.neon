@@ -1,0 +1,116 @@
+IMPORT file
+IMPORT sys
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    part1(lines)
+    part2(lines)
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    FUNCTION eval(s: String): Number
+        VAR r := 0
+        VAR i := 0
+        VAR op := "+"
+        LOOP
+            VAR n: Number
+            IF s[i] = "(" THEN
+                VAR d := 1
+                VAR j := i + 1
+                WHILE d > 0 DO
+                    CASE s[j]
+                        WHEN "(" DO
+                            INC d
+                        WHEN ")" DO
+                            DEC d
+                    END CASE
+                    INC j
+                END WHILE
+                n := eval(s[i+1 TO j-2])
+                i := j - 1
+            ELSE
+                n := num(s[i])
+            END IF
+            CASE op
+                WHEN "+" DO
+                    r := r + n
+                WHEN "*" DO
+                    r := r * n
+                WHEN OTHERS DO
+                    ASSERT FALSE
+            END CASE
+            INC i
+            IF i >= s.length() THEN
+                EXIT LOOP
+            END IF
+            ASSERT s[i] = " "
+            INC i
+            op := s[i]
+            INC i
+            ASSERT s[i] = " "
+            INC i
+        END LOOP
+        RETURN r
+    END FUNCTION
+    VAR sum := 0
+    FOREACH line IN lines DO
+        sum := sum + eval(line)
+    END FOREACH
+    print(sum)
+END FUNCTION
+
+FUNCTION part2(lines: Array<String>)
+    FUNCTION value(s: String, INOUT i: Number): Number
+        VAR n: Number
+        IF s[i] = "(" THEN
+            VAR d := 1
+            VAR j := i + 1
+            WHILE d > 0 DO
+                CASE s[j]
+                    WHEN "(" DO
+                        INC d
+                    WHEN ")" DO
+                        DEC d
+                END CASE
+                INC j
+            END WHILE
+            n := eval(s[i+1 TO j-2])
+            i := j - 1
+        ELSE
+            n := num(s[i])
+        END IF
+        RETURN n
+    END FUNCTION
+    FUNCTION eval(s: String): Number
+        VAR r := 1
+        VAR i := 0
+        LOOP
+            VAR t := 0
+            WHILE i < s.length() DO
+                LET n := value(s, INOUT i)
+                t := t + n
+                IF i+2 < s.length() AND s[i+2] <> "+" THEN
+                    EXIT WHILE
+                END IF
+                i := i + 4
+            END WHILE
+            r := r * t
+            INC i
+            IF i >= s.length() THEN
+                EXIT LOOP
+            END IF
+            ASSERT s[i] = " "
+            INC i
+            ASSERT s[i] = "*"
+            INC i
+            ASSERT s[i] = " "
+            INC i
+        END LOOP
+        RETURN r
+    END FUNCTION
+    VAR sum := 0
+    FOREACH line IN lines DO
+        sum := sum + eval(line)
+    END FOREACH
+    print(sum)
+END FUNCTION
