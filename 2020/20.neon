@@ -1,0 +1,208 @@
+IMPORT file
+IMPORT sys
+
+CONSTANT GridSize := 12
+
+CONSTANT Top := 0
+CONSTANT Bottom := 1
+CONSTANT Left := 2
+CONSTANT Right := 3
+
+CONSTANT Opposite := [Bottom, Top, Right, Left]
+
+CONSTANT Monster := [
+    [18],
+    [0, 5, 6, 11, 12, 17, 18, 19],
+    [1, 4, 7, 10, 13, 16]
+]
+
+TYPE Tile IS RECORD
+    id: Number
+    data: Array<String>
+    flips: Array<Array<String>>
+    used: Boolean
+END RECORD
+
+TYPE Placement IS RECORD
+    index: Number
+    flip: Number
+END RECORD
+
+VAR tiles: Array<Tile> := []
+
+BEGIN MAIN
+    LET lines := file.readLines(sys.args[1])
+    FOR i := 0 TO lines.size() STEP 12 DO
+        ASSERT lines[i][9] = ":"
+        LET id := num(lines[i][5 TO 8])
+        LET tile := lines[i+1 TO i+10]
+        VAR flips: Array<Array<String>> := []
+        flips[0][Top] := tile[0]
+        flips[0][Bottom] := tile[9]
+        VAR left, right := ""
+        FOR j := 0 TO 9 DO
+            left.append(tile[j][0])
+            right.append(tile[j][9])
+        END FOR
+        flips[0][Left] := left
+        flips[0][Right] := right
+        flips[1] := [reverse(flips[0][Left]), reverse(flips[0][Right]), flips[0][Bottom], flips[0][Top]]
+        flips[2] := [reverse(flips[1][Left]), reverse(flips[1][Right]), flips[1][Bottom], flips[1][Top]]
+        flips[3] := [reverse(flips[2][Left]), reverse(flips[2][Right]), flips[2][Bottom], flips[2][Top]]
+        flips[4] := [reverse(flips[0][Top]), reverse(flips[0][Bottom]), flips[0][Right], flips[0][Left]]
+        flips[5] := [reverse(flips[4][Left]), reverse(flips[4][Right]), flips[4][Bottom], flips[4][Top]]
+        flips[6] := [reverse(flips[5][Left]), reverse(flips[5][Right]), flips[5][Bottom], flips[5][Top]]
+        flips[7] := [reverse(flips[6][Left]), reverse(flips[6][Right]), flips[6][Bottom], flips[6][Top]]
+        tiles.append(Tile(id WITH id, data WITH tile, flips WITH flips))
+    END FOR
+    VAR grid: Array<Array<Placement>> := []
+    _ := try(INOUT grid, 0, 0)
+    part2(grid)
+END MAIN
+
+FUNCTION try(INOUT grid: Array<Array<Placement>>, row, col: Number): Boolean
+    FOR i := 0 TO tiles.size()-1 DO
+        LET t := tiles[i]
+        IF t.used THEN
+            NEXT FOR
+        END IF
+        --print("trying \(t.id) at \(row),\(col)")
+        grid[row][col].index := i
+        tiles[i].used := TRUE
+        FOR f := 0 TO 7 DO
+            grid[row][col].flip := f
+            IF col > 0 THEN
+                IF t.flips[f][Left] <> tiles[grid[row][col-1].index].flips[grid[row][col-1].flip][Right] THEN
+                    NEXT FOR
+                END IF
+            END IF
+            IF row > 0 THEN
+                IF t.flips[f][Top] <> tiles[grid[row-1][col].index].flips[grid[row-1][col].flip][Bottom] THEN
+                    NEXT FOR
+                END IF
+            END IF
+            IF col < GridSize-1 THEN
+                IF try(INOUT grid, row, col+1) THEN
+                    RETURN TRUE
+                END IF
+            ELSIF row < GridSize-1 THEN
+                IF try(INOUT grid, row+1, 0) THEN
+                    RETURN TRUE
+                END IF
+            ELSE
+                print(tiles[grid[0][0].index].id * tiles[grid[0][GridSize-1].index].id * tiles[grid[GridSize-1][0].index].id * tiles[grid[GridSize-1][GridSize-1].index].id)
+                RETURN TRUE
+            END IF
+        END FOR
+        tiles[i].used := FALSE
+    END FOR
+    RETURN FALSE
+END FUNCTION
+
+FUNCTION part2(grid: Array<Array<Placement>>)
+    VAR image: Array<String> := []
+    FOREACH row IN grid DO
+        FOR i := 1 TO 8 DO
+            image.append("")
+        END FOR
+        FOREACH t IN row DO
+            FOREACH s IN orient(t.flip, trim(tiles[t.index].data)) INDEX i DO
+                image[LAST-(7-i)].append(s)
+            END FOREACH
+        END FOREACH
+    END FOREACH
+    LET orig := image
+    FOR o := 0 TO 7 DO
+        image := orient(o, orig)
+        VAR monsters := 0
+        FOR y := 0 TO image.size()-3 DO
+            FOR x := 0 TO image[y].length()-19 LABEL CheckMonster DO
+                FOR j := 0 TO 2 DO
+                    FOREACH i IN Monster[j] DO
+                        IF image[y+j][x+i] <> "#" THEN
+                            NEXT CheckMonster
+                        END IF
+                    END FOREACH
+                END FOR
+                INC monsters
+                FOR j := 0 TO 2 DO
+                    FOREACH i IN Monster[j] DO
+                        image[y+j][x+i] := "O"
+                    END FOREACH
+                END FOR
+            END FOR
+        END FOR
+        --print("\(o) \(monsters)")
+        IF monsters > 0 THEN
+            EXIT FOR
+        END IF
+    END FOR
+    VAR count := 0
+    FOR y := 0 TO image.size()-1 DO
+        FOR x := 0 TO image[y].length()-1 DO
+            IF image[y][x] = "#" THEN
+                INC count
+            END IF
+        END FOR
+    END FOR
+    --FOREACH s IN image DO
+    --    print(s)
+    --END FOREACH
+    print(count)
+END FUNCTION
+
+FUNCTION orient(f: Number, tile: Array<String>): Array<String>
+    FUNCTION rot(t: Array<String>): Array<String>
+        VAR r: Array<String> := []
+        FOR x := 0 TO t.size()-1 DO
+            r.append("")
+            FOR y := t.size()-1 TO 0 STEP -1 DO
+                r[LAST].append(t[y][x])
+            END FOR
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    FUNCTION mirror(t: Array<String>): Array<String>
+        VAR r: Array<String> := []
+        FOR y := 0 TO t.size()-1 DO
+            r.append(reverse(t[y]))
+        END FOR
+        RETURN r
+    END FUNCTION
+
+    CASE f
+        WHEN 0 DO
+            RETURN tile
+        WHEN 1 DO
+            RETURN rot(tile)
+        WHEN 2 DO
+            RETURN rot(rot(tile))
+        WHEN 3 DO
+            RETURN rot(rot(rot(tile)))
+        WHEN 4 DO
+            RETURN mirror(tile)
+        WHEN 5 DO
+            RETURN rot(mirror(tile))
+        WHEN 6 DO
+            RETURN rot(rot(mirror(tile)))
+        WHEN 7 DO
+            RETURN rot(rot(rot(mirror(tile))))
+    END CASE
+END FUNCTION
+
+FUNCTION trim(tile: Array<String>): Array<String>
+    VAR r: Array<String> := []
+    FOR i := 1 TO 8 DO
+        r.append(tile[i][1 TO 8])
+    END FOR
+    RETURN r
+END FUNCTION
+
+FUNCTION reverse(s: String): String
+    VAR r := ""
+    FOR i := s.length()-1 TO 0 STEP -1 DO
+        r.append(s[i])
+    END FOR
+    RETURN r
+END FUNCTION
