@@ -1,0 +1,18 @@
+IMPORT file
+
+LET a := file.readLines("1.txt")
+VAR count := 0
+FOR i := 1 TO a.size()-1 DO
+    IF num(a[i]) > num(a[i-1]) THEN
+        INC count
+    END IF
+END FOR
+print(count)
+
+count := 0
+FOR i := 3 TO a.size()-1 DO
+    IF num(a[i]) > num(a[i-3]) THEN
+        INC count
+    END IF
+END FOR
+print(count)
