@@ -1,0 +1,44 @@
+IMPORT file
+IMPORT string
+
+BEGIN MAIN
+    LET lines := file.readLines("2.txt")
+    part1(lines)
+    part2(lines)
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    VAR position := 0
+    VAR depth := 0
+    FOREACH s IN lines DO
+        LET a := string.split(s, " ")
+        CASE a[0]
+            WHEN "forward" DO
+                position := position + num(a[1])
+            WHEN "down" DO
+                depth := depth + num(a[1])
+            WHEN "up" DO
+                depth := depth - num(a[1])
+        END CASE
+    END FOREACH
+    print(position * depth)
+END FUNCTION
+
+FUNCTION part2(lines: Array<String>)
+    VAR position := 0
+    VAR depth := 0
+    VAR aim := 0
+    FOREACH s IN lines DO
+        LET a := string.split(s, " ")
+        CASE a[0]
+            WHEN "forward" DO
+                position := position + num(a[1])
+                depth := depth + aim * num(a[1])
+            WHEN "down" DO
+                aim := aim + num(a[1])
+            WHEN "up" DO
+                aim := aim - num(a[1])
+        END CASE
+    END FOREACH
+    print(position * depth)
+END FUNCTION
