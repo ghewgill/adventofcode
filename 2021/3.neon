@@ -1,0 +1,80 @@
+IMPORT base
+IMPORT file
+
+BEGIN MAIN
+    LET lines := file.readLines("3.txt")
+    part1(lines)
+    part2(lines)
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    VAR ones: Array<Number> := []
+    FOREACH s IN lines DO
+        FOR i := 0 TO s.length()-1 DO
+            IF s[i] = "1" THEN
+                INC ones[i]
+            END IF
+        END FOR
+    END FOREACH
+    VAR gamma := ""
+    FOR i := 0 TO ones.size()-1 DO
+        IF ones[i] > lines.size()/2 THEN
+            gamma.append("1")
+        ELSE
+            gamma.append("0")
+        END IF
+    END FOR
+    VAR epsilon := ""
+    FOR i := 0 TO ones.size()-1 DO
+        IF ones[i] < lines.size()/2 THEN
+            epsilon.append("1")
+        ELSE
+            epsilon.append("0")
+        END IF
+    END FOR
+    print(base.fromBinary(gamma) * base.fromBinary(epsilon))
+END FUNCTION
+
+FUNCTION part2(lines: Array<String>)
+    VAR a := lines
+    FOR i := 0 TO 11 DO
+        IF a.size() = 1 THEN
+            EXIT FOR
+        END IF
+        LET n := count(a, i)
+        LET sel := (IF n >= a.size()/2 THEN "1" ELSE "0")
+        a := select(a, i, sel)
+    END FOR
+    LET oxy := base.fromBinary(a[0])
+    a := lines
+    FOR i := 0 TO 11 DO
+        IF a.size() = 1 THEN
+            EXIT FOR
+        END IF
+        LET n := count(a, i)
+        LET sel := (IF n >= a.size()/2 THEN "0" ELSE "1")
+        a := select(a, i, sel)
+    END FOR
+    LET co2 := base.fromBinary(a[0])
+    print(oxy * co2)
+END FUNCTION
+
+FUNCTION count(lines: Array<String>, index: Number): Number
+    VAR r := 0
+    FOREACH s IN lines DO
+        IF s[index] = "1" THEN
+            INC r
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION
+
+FUNCTION select(lines: Array<String>, index: Number, t: String): Array<String>
+    VAR r: Array<String> := []
+    FOREACH s IN lines DO
+        IF s[index] = t THEN
+            r.append(s)
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION
