@@ -1,0 +1,76 @@
+IMPORT file
+IMPORT string
+
+LET lines := file.readLines("5.txt")
+VAR board: Array<Array<Number>> := [[]]
+FOR i := 0 TO 999 DO
+    board[0].append(0)
+END FOR
+FOR i := 1 TO 999 DO
+    board.append(board[0])
+END FOR
+FOREACH s IN lines DO
+    LET a := string.split(s, " ")
+    LET p1 := string.split(a[0], ",")
+    LET p2 := string.split(a[2], ",")
+    LET x1 := num(p1[0])
+    LET y1 := num(p1[1])
+    LET x2 := num(p2[0])
+    LET y2 := num(p2[1])
+    IF x1 = x2 THEN
+        IF y1 < y2 THEN
+            FOR y := y1 TO y2 DO
+                INC board[y][x1]
+            END FOR
+        ELSE
+            FOR y := y2 TO y1 DO
+                INC board[y][x1]
+            END FOR
+        END IF
+    ELSIF y1 = y2 THEN
+        IF x1 < x2 THEN
+            FOR x := x1 TO x2 DO
+                INC board[y1][x]
+            END FOR
+        ELSE
+            FOR x := x2 TO x1 DO
+                INC board[y1][x]
+            END FOR
+        END IF
+    ELSE
+        IF x1 < x2 THEN
+            IF y1 < y2 THEN
+                ASSERT x2-x1 = y2-y1
+                FOR i := 0 TO x2-x1 DO
+                    INC board[y1+i][x1+i]
+                END FOR
+            ELSIF y2 < y1 THEN
+                ASSERT x2-x1 = y1-y2
+                FOR i := 0 TO x2-x1 DO
+                    INC board[y1-i][x1+i]
+                END FOR
+            END IF
+        ELSIF x2 < x1 THEN
+            IF y1 < y2 THEN
+                ASSERT x1-x2 = y2-y1
+                FOR i := 0 TO x1-x2 DO
+                    INC board[y1+i][x1-i]
+                END FOR
+            ELSIF y2 < y1 THEN
+                ASSERT x1-x2 = y1-y2
+                FOR i := 0 TO x1-x2 DO
+                    INC board[y1-i][x1-i]
+                END FOR
+            END IF
+        END IF
+    END IF
+END FOREACH
+VAR count := 0
+FOR y := 0 TO 999 DO
+    FOR x := 0 TO 999 DO
+        IF board[y][x] > 1 THEN
+            INC count
+        END IF
+    END FOR
+END FOR
+print(count)
