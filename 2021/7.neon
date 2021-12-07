@@ -1,0 +1,33 @@
+IMPORT file
+IMPORT math
+IMPORT string
+
+LET lines := file.readLines("7.txt")
+LET sa := string.split(lines[0], ",")
+VAR a: Array<Number> := []
+FOREACH x IN sa DO
+    a.append(num(x))
+END FOREACH
+VAR best_t1 := -1
+VAR best_f1 := 99999999
+VAR best_t2 := -1
+VAR best_f2 := 99999999
+FOR t := 0 TO 2000 DO
+    VAR f1 := 0
+    VAR f2 := 0
+    FOREACH x IN a DO
+        LET d := math.abs(t - x)
+        f1 := f1 + d
+        f2 := f2 + (d*d + d) / 2
+    END FOREACH
+    IF f1 < best_f1 THEN
+        best_t1 := t
+        best_f1 := f1
+    END IF
+    IF f2 < best_f2 THEN
+        best_t2 := t
+        best_f2 := f2
+    END IF
+END FOR
+print(best_f1)
+print(best_f2)
