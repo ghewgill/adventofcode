@@ -1,0 +1,156 @@
+IMPORT file
+IMPORT string
+
+LET lines := file.readLines("8.txt")
+VAR count := 0
+FOREACH s IN lines DO
+    LET a := string.split(s, " ")
+    FOREACH t IN a[11 TO 14] DO
+        IF t.length() IN [2, 3, 4, 7] THEN
+            INC count
+        END IF
+    END FOREACH
+END FOREACH
+print(count)
+
+/*
+    1 - easy
+    7 - easy [top]
+    4 - easy
+    8 - easy
+    9 - combine 7 and 4, look for one extra [bottom]
+    5 - from 9 remove one of 1
+    6 - from 8 remove one of 1
+    0 - remaining one with 6 segments [middle]
+    3 - 1 plus top, middle, bottom
+    2 - last remaining
+*/
+
+VAR total := 0
+FOREACH s IN lines DO
+    LET a := string.split(s, " ")
+    VAR segments_to_digit: Dictionary<Number> := {}
+    VAR digit_to_segments: Array<String> := []
+    VAR remaining_segments: Array<String> := []
+    FOREACH t IN a[0 TO 9] DO
+        LET st := sort_string(t)
+        CASE st.length()
+            WHEN 2 DO
+                segments_to_digit[st] := 1
+                digit_to_segments[1] := st
+            WHEN 3 DO
+                segments_to_digit[st] := 7
+                digit_to_segments[7] := st
+            WHEN 4 DO
+                segments_to_digit[st] := 4
+                digit_to_segments[4] := st
+            WHEN 7 DO
+                segments_to_digit[st] := 8
+                digit_to_segments[8] := st
+            WHEN OTHERS DO
+                remaining_segments.append(st)
+        END CASE
+    END FOREACH
+    VAR top: String := ""
+    FOREACH c IN digit_to_segments[7] DO
+        IF c NOT IN digit_to_segments[1] THEN
+            top := c
+            EXIT FOREACH
+        END IF
+    END FOREACH
+    ASSERT top <> ""
+    LET almost_9 := sort_string(digit_to_segments[7] & digit_to_segments[4])
+    VAR bottom := ""
+    FOR r := 0 TO remaining_segments.size()-1 DO
+        LET t := remaining_segments[r]
+        IF t.length() = 6 THEN
+            bottom := remove_chars(t, almost_9)
+            IF bottom.length() = 1 THEN
+                digit_to_segments[9] := t
+                segments_to_digit[t] := 9
+                remaining_segments := remaining_segments[FIRST TO r-1] & remaining_segments[r+1 TO LAST]
+                EXIT FOR
+            END IF
+        END IF
+    END FOR
+    ASSERT bottom <> ""
+    VAR maybe_5 := remove_chars(digit_to_segments[9], digit_to_segments[1][0])
+    IF maybe_5 IN remaining_segments THEN
+        digit_to_segments[5] := maybe_5
+        segments_to_digit[maybe_5] := 5
+        remaining_segments := remove_string(remaining_segments, maybe_5)
+    ELSE
+        maybe_5 := remove_chars(digit_to_segments[9], digit_to_segments[1][1])
+        IF maybe_5 IN remaining_segments THEN
+            digit_to_segments[5] := maybe_5
+            segments_to_digit[maybe_5] := 5
+            remaining_segments := remove_string(remaining_segments, maybe_5)
+        END IF
+    END IF
+    VAR maybe_6 := remove_chars(digit_to_segments[8], digit_to_segments[1][0])
+    IF maybe_6 IN remaining_segments THEN
+        digit_to_segments[6] := maybe_6
+        segments_to_digit[maybe_6] := 6
+        remaining_segments := remove_string(remaining_segments, maybe_6)
+    ELSE
+        maybe_6 := remove_chars(digit_to_segments[8], digit_to_segments[1][1])
+        IF maybe_6 IN remaining_segments THEN
+            digit_to_segments[6] := maybe_6
+            segments_to_digit[maybe_6] := 6
+            remaining_segments := remove_string(remaining_segments, maybe_6)
+        END IF
+    END IF
+    FOR i := 0 TO remaining_segments.size()-1 DO
+        LET t := remaining_segments[i]
+        IF t.length() = 6 THEN
+            digit_to_segments[0] := t
+            segments_to_digit[t] := 0
+            remaining_segments := remove_string(remaining_segments, t)
+            EXIT FOR
+        END IF
+    END FOR
+    LET middle := remove_chars(digit_to_segments[8], digit_to_segments[0])
+    LET three := sort_string(digit_to_segments[1] & top & middle & bottom)
+    digit_to_segments[3] := three
+    segments_to_digit[three] := 3
+    remaining_segments := remove_string(remaining_segments, three)
+    ASSERT remaining_segments.size() = 1
+    LET two := remaining_segments[0]
+    digit_to_segments[2] := two
+    segments_to_digit[two] := 2
+    remaining_segments := remove_string(remaining_segments, two)
+    LET n := 1000 * segments_to_digit[sort_string(a[11])] +
+              100 * segments_to_digit[sort_string(a[12])] +
+               10 * segments_to_digit[sort_string(a[13])] +
+                    segments_to_digit[sort_string(a[14])]
+    total := total + n
+END FOREACH
+print(total)
+
+FUNCTION sort_string(s: String): String
+    VAR d: Dictionary<Boolean> := {}
+    FOREACH c IN s DO
+        d[c] := TRUE
+    END FOREACH
+    RETURN string.join(d.keys(), "")
+END FUNCTION
+
+FUNCTION remove_chars(s, t: String): String
+    VAR r := ""
+    FOREACH c IN s DO
+        IF c NOT IN t THEN
+            r.append(c)
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION
+
+FUNCTION remove_string(a: Array<String>, t: String): Array<String>
+    VAR r: Array<String> := []
+    FOREACH x IN a DO
+        IF x <> t THEN
+            r.append(x)
+        END IF
+    END FOREACH
+    RETURN r
+END FUNCTION
