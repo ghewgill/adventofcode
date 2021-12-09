@@ -1,0 +1,81 @@
+IMPORT file
+IMPORT multiarray
+
+BEGIN MAIN
+    LET lines := file.readLines("9.txt")
+    part1(lines)
+    part2(lines)
+END MAIN
+
+FUNCTION part1(lines: Array<String>)
+    LET h := lines.size()-1
+    LET w := lines[0].length()-1
+    VAR total := 0
+    FOR i := 0 TO h DO
+        FOR j := 0 TO w DO
+            IF (i = 0 OR lines[i][j] < lines[i-1][j]) AND
+               (i = h OR lines[i][j] < lines[i+1][j]) AND
+               (j = 0 OR lines[i][j] < lines[i][j-1]) AND
+               (j = w OR lines[i][j] < lines[i][j+1]) THEN
+                total := total + (1 + num(lines[i][j]))
+            END IF
+        END FOR
+    END FOR
+    print(total)
+END FUNCTION
+
+FUNCTION part2(lines: Array<String>)
+    LET h := lines.size()
+    LET w := lines[0].length()
+    VAR seen := multiarray.makeNumber2D(h, w)
+    FOR i := 0 TO h-1 DO
+        FOR j := 0 TO w-1 DO
+            IF lines[i][j] = "9" THEN
+                seen[i][j] := -1
+            END IF
+        END FOR
+    END FOR
+    VAR basin := 1
+    VAR sizes: Array<Number> := []
+    FOR i := 0 TO h-1 DO
+        FOR j := 0 TO w-1 DO
+            IF seen[i][j] = 0 THEN
+                FUNCTION flood(y, x: Number): Number
+                    seen[y][x] := basin
+                    VAR r := 1
+                    IF y > 0 AND seen[y-1][x] = 0 THEN
+                        r := r + flood(y-1, x)
+                    END IF
+                    IF y < h-1 AND seen[y+1][x] = 0 THEN
+                        r := r + flood(y+1, x)
+                    END IF
+                    IF x > 0 AND seen[y][x-1] = 0 THEN
+                        r := r + flood(y, x-1)
+                    END IF
+                    IF x < w-1 AND seen[y][x+1] = 0 THEN
+                        r := r + flood(y, x+1)
+                    END IF
+                    RETURN r
+                END FUNCTION
+                sizes[basin] := flood(i, j)
+                INC basin
+            END IF
+        END FOR
+    END FOR
+    sort(INOUT sizes)
+    print(sizes[0] * sizes[1] * sizes[2])
+END FUNCTION
+
+FUNCTION sort(INOUT a: Array<Number>)
+    REPEAT
+        VAR any := FALSE
+        FOR i := 0 TO a.size()-2 DO
+            IF a[i] < a[i+1] THEN
+                LET t := a[i]
+                a[i] := a[i+1]
+                a[i+1] := t
+                any := TRUE
+            END IF
+        END FOR
+    UNTIL NOT any
+END FUNCTION
