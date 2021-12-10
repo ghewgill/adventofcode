@@ -1,0 +1,68 @@
+IMPORT file
+
+CONSTANT Match := {
+    "(": ")",
+    "[": "]",
+    "{": "}",
+    "<": ">",
+}
+
+CONSTANT ErrorScore := {
+    ")": 3,
+    "]": 57,
+    "}": 1197,
+    ">": 25137,
+}
+
+CONSTANT FixScore := {
+    ")": 1,
+    "]": 2,
+    "}": 3,
+    ">": 4,
+}
+
+LET lines := file.readLines("10.txt")
+VAR errscore := 0
+VAR fixscores: Array<Number> := []
+FOREACH s IN lines DO
+    VAR stack: Array<String> := []
+    VAR good := TRUE
+    FOREACH c IN s DO
+        CASE c
+            WHEN "(", "[", "{", "<" DO
+                stack.append(c)
+            WHEN OTHERS DO
+                IF c <> Match[stack[LAST]] THEN
+                    errscore := errscore + ErrorScore[c]
+                    good := FALSE
+                    EXIT FOREACH
+                END IF
+                stack := stack[FIRST TO LAST-1]
+        END CASE
+    END FOREACH
+    IF good THEN
+        VAR score := 0
+        WHILE stack.size() > 0 DO
+            score := score * 5 + FixScore[Match[stack[LAST]]]
+            stack := stack[FIRST TO LAST-1]
+        END WHILE
+        fixscores.append(score)
+    END IF
+END FOREACH
+print(errscore)
+sort(INOUT fixscores)
+print(fixscores[(fixscores.size()-1)/2])
+
+FUNCTION sort(INOUT a: Array<Number>)
+    REPEAT
+        VAR any := FALSE
+        FOR i := 0 TO a.size()-2 DO
+            IF a[i] < a[i+1] THEN
+                LET t := a[i]
+                a[i] := a[i+1]
+                a[i+1] := t
+                any := TRUE
+            END IF
+        END FOR
+    UNTIL NOT any
+END FUNCTION
