@@ -1,0 +1,74 @@
+IMPORT file
+
+LET lines := file.readLines("11.txt")
+VAR board: Array<Array<Number>> := []
+FOREACH s IN lines DO
+    board.append([0])
+    FOREACH x IN s DO
+        board[LAST].append(num(x))
+    END FOREACH
+    board[LAST].append(0)
+END FOREACH
+board := [board[0]] & board & [board[0]]
+VAR flashes := 0
+VAR i := 0
+LOOP
+    FOR y := 1 TO 10 DO
+        FOR x := 1 TO 10 DO
+            INC board[y][x]
+        END FOR
+    END FOR
+    REPEAT
+        VAR any := FALSE
+        FOR y := 1 TO 10 DO
+            FOR x := 1 TO 10 DO
+                IF board[y][x] > 9 THEN
+                    IF board[y-1][x-1] > 0 THEN
+                        INC board[y-1][x-1]
+                    END IF
+                    IF board[y-1][x] > 0 THEN
+                        INC board[y-1][x]
+                    END IF
+                    IF board[y-1][x+1] > 0 THEN
+                        INC board[y-1][x+1]
+                    END IF
+                    IF board[y][x-1] > 0 THEN
+                        INC board[y][x-1]
+                    END IF
+                    IF board[y][x+1] > 0 THEN
+                        INC board[y][x+1]
+                    END IF
+                    IF board[y+1][x-1] > 0 THEN
+                        INC board[y+1][x-1]
+                    END IF
+                    IF board[y+1][x] > 0 THEN
+                        INC board[y+1][x]
+                    END IF
+                    IF board[y+1][x+1] > 0 THEN
+                        INC board[y+1][x+1]
+                    END IF
+                    board[y][x] := 0
+                    INC flashes
+                    any := TRUE
+                END IF
+            END FOR
+        END FOR
+    UNTIL NOT any
+    INC i
+    IF i = 100 THEN
+        print(flashes)
+    END IF
+    VAR all := TRUE
+    FOR y := 1 TO 10 LABEL check DO
+        FOR x := 1 TO 10 DO
+            IF board[y][x] <> 0 THEN
+                all := FALSE
+                EXIT check
+            END IF
+        END FOR
+    END FOR
+    IF all THEN
+        print(i)
+        EXIT LOOP
+    END IF
+END LOOP
