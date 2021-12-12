@@ -1,0 +1,58 @@
+IMPORT file
+IMPORT string
+
+LET lines := file.readLines("12.txt")
+VAR path: Dictionary<Array<String>> := {}
+FOREACH s IN lines DO
+    LET a := string.split(s, "-")
+    IF a[0] NOT IN path THEN
+        path[a[0]] := []
+    END IF
+    path[a[0]].append(a[1])
+    IF a[1] NOT IN path THEN
+        path[a[1]] := []
+    END IF
+    path[a[1]].append(a[0])
+END FOREACH
+VAR seen: Dictionary<Number> := {}
+FOREACH n IN path.keys() DO
+    seen[n] := 0
+END FOREACH
+VAR count := 0
+FUNCTION try1(node: String)
+    INC seen[node]
+    FOREACH next IN path[node] DO
+        IF next = "end" THEN
+            INC count
+        ELSIF string.upper(next) = next THEN
+            try1(next)
+        ELSIF seen[next] = 0 THEN
+            try1(next)
+        END IF
+    END FOREACH
+    DEC seen[node]
+END FUNCTION
+try1("start")
+print(count)
+FOREACH n IN path.keys() DO
+    seen[n] := 0
+END FOREACH
+seen["start"] := 2
+count := 0
+FUNCTION try2(node: String, twice: Boolean)
+    INC seen[node]
+    FOREACH next IN path[node] DO
+        IF next = "end" THEN
+            INC count
+        ELSIF string.upper(next) = next THEN
+            try2(next, twice)
+        ELSIF seen[next] = 0 THEN
+            try2(next, twice)
+        ELSIF seen[next] = 1 AND NOT twice THEN
+            try2(next, TRUE)
+        END IF
+    END FOREACH
+    DEC seen[node]
+END FUNCTION
+try2("start", FALSE)
+print(count)
