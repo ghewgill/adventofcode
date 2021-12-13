@@ -1,0 +1,63 @@
+IMPORT file
+IMPORT string
+
+CONSTANT width := 1310
+
+LET lines := file.readLines("13.txt")
+VAR paper: Array<Array<Boolean>> := []
+VAR folds := 0
+FOREACH s IN lines DO
+    LET a := string.split(s, ",")
+    IF a.size() = 2 THEN
+        LET x := num(a[0])
+        LET y := num(a[1])
+        paper[y, x] := TRUE
+    ELSE
+        EXIT FOREACH
+    END IF
+END FOREACH
+FOR y := 0 TO paper.size()-1 DO
+    WHILE paper[y].size() < width+1 DO
+        paper[y].append(FALSE)
+    END WHILE
+END FOR
+FOREACH s IN lines DO
+    IF string.hasPrefix(s, "fold along ") THEN
+        IF s[11] = "x" THEN
+            LET fold := num(s[13 TO LAST])
+            FOR y := 0 TO paper.size()-1 DO
+                FOR x := 0 TO fold-1 DO
+                    paper[y,x] := paper[y,x] OR paper[y,fold*2-x]
+                END FOR
+                paper[y] := paper[y][FIRST TO fold-1]
+            END FOR
+        ELSIF s[11] = "y" THEN
+            LET fold := num(s[13 TO LAST])
+            FOR y := 0 TO fold-1 DO
+                FOR x := 0 TO paper[y].size()-1 DO
+                    paper[y,x] := paper[y,x] OR paper[fold*2-y,x]
+                END FOR
+            END FOR
+            paper := paper[FIRST TO fold-1]
+        END IF
+        INC folds
+        IF folds = 1 THEN
+            VAR n := 0
+            FOR y := 0 TO paper.size()-1 DO
+                FOR x := 0 TO paper[y].size()-1 DO
+                    IF paper[y,x] THEN
+                        INC n
+                    END IF
+                END FOR
+            END FOR
+            print(n)
+        END IF
+    END IF
+END FOREACH
+FOR y := 0 TO paper.size()-1 DO
+    VAR s := ""
+    FOR x := 0 TO paper[y].size()-1 DO
+        s.append((IF paper[y][x] THEN "#" ELSE "."))
+    END FOR
+    print(s)
+END FOR
