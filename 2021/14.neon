@@ -1,0 +1,88 @@
+IMPORT file
+IMPORT string
+
+BEGIN MAIN
+    LET lines := file.readLines("14.txt")
+    VAR p: String := lines[0]
+    VAR rules: Dictionary<String> := {}
+    FOREACH s IN lines[2 TO LAST] DO
+        LET a := string.split(s, " ")
+        rules[a[0]] := a[2]
+    END FOREACH
+    FOR i := 1 TO 10 DO
+        VAR t := ""
+        FOR j := 0 TO p.length()-2 DO
+            t.append(p[j])
+            t.append(rules[p[j] & p[j+1]])
+        END FOR
+        t.append(p[LAST])
+        p := t
+    END FOR
+    VAR count: Dictionary<Number> := {}
+    FOREACH c IN p DO
+        INC count[c]
+    END FOREACH
+    VAR r: Array<Number> := []
+    FOREACH c IN count.keys() DO
+        r.append(count[c])
+    END FOREACH
+    sort(INOUT r)
+    print(r[0] - r[LAST])
+
+    VAR counts: Dictionary<Dictionary<Number>> := {}
+    FOREACH k IN rules.keys() DO
+        counts[k] := {}
+    END FOREACH
+    FOR g := 1 TO 40 DO
+        VAR newcounts: Dictionary<Dictionary<Number>> := {}
+        FOREACH k IN counts.keys() DO
+            newcounts[k] := add(counts[k[0] & rules[k]], counts[rules[k] & k[1]])
+            INC newcounts[k][rules[k]]
+        END FOREACH
+        counts := newcounts
+    END FOR
+    p := lines[0]
+    count := {}
+    FOR i := 0 TO p.length()-2 DO
+        INC count[p[i]]
+        count := add(count, counts[p[i TO i+1]])
+    END FOR
+    INC count[p[LAST]]
+    r := []
+    FOREACH c IN count.keys() DO
+        r.append(count[c])
+    END FOREACH
+    sort(INOUT r)
+    print(r[0] - r[LAST])
+END MAIN
+
+FUNCTION sort(INOUT a: Array<Number>)
+    REPEAT
+        VAR any := FALSE
+        FOR i := 0 TO a.size()-2 DO
+            IF a[i] < a[i+1] THEN
+                LET t := a[i]
+                a[i] := a[i+1]
+                a[i+1] := t
+                any := TRUE
+            END IF
+        END FOR
+    UNTIL NOT any
+END FUNCTION
+
+FUNCTION add(d1, d2: Dictionary<Number>): Dictionary<Number>
+    VAR r: Dictionary<Number> := {}
+    FOREACH k IN d1.keys() DO
+        IF k NOT IN r THEN
+            r[k] := 0
+        END IF
+        r[k] := r[k] + d1[k]
+    END FOREACH
+    FOREACH k IN d2.keys() DO
+        IF k NOT IN r THEN
+            r[k] := 0
+        END IF
+        r[k] := r[k] + d2[k]
+    END FOREACH
+    RETURN r
+END FUNCTION
