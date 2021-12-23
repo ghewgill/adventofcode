@@ -1,0 +1,120 @@
+IMPORT base
+IMPORT file
+
+TYPE Packet IS RECORD
+    version: Number
+    type: Number
+    value: Number
+    subpackets: Array<Packet>
+END RECORD
+
+BEGIN MAIN
+    LET line := file.readLines("16.txt")[0]
+    VAR bits: Array<Number> := []
+    FOREACH c IN line DO
+        VAR s := base.toBinary(base.fromHex(c))
+        WHILE s.length() < 4 DO
+            s := "0" & s
+        END WHILE
+        FOREACH x IN s DO
+            bits.append(num(x))
+        END FOREACH
+    END FOREACH
+    VAR i := 0
+    LET tree := parse(bits, INOUT i)
+    print(sumversions(tree))
+    print(eval(tree))
+END MAIN
+
+FUNCTION parse(bits: Array<Number>, INOUT index: Number): Packet
+    VAR r := Packet()
+    r.version := toint(bits[index TO index+2])
+    r.type := toint(bits[index+3 TO index+5])
+    IF r.type = 4 THEN
+        VAR n := 0
+        VAR i := index+6
+        REPEAT
+            n := n * 16 + toint(bits[i+1 TO i+4])
+            LET prefix := bits[i]
+            i := i + 5
+        UNTIL prefix = 0
+        r.value := n
+        index := i
+    ELSE
+        IF bits[index+6] = 0 THEN
+            LET len := toint(bits[index+7 TO index+21])
+            VAR i := index+22
+            WHILE i-(index+22) < len DO
+                r.subpackets.append(parse(bits, INOUT i))
+            END WHILE
+            index := i
+        ELSE
+            LET np := toint(bits[index+7 TO index+17])
+            VAR i := index+18
+            FOR z := 1 TO np DO
+                r.subpackets.append(parse(bits, INOUT i))
+            END FOR
+            index := i
+        END IF
+    END IF
+    RETURN r
+END FUNCTION
+
+FUNCTION toint(bits: Array<Number>): Number
+    VAR s := ""
+    FOREACH b IN bits DO
+        s := s & str(b)
+    END FOREACH
+    RETURN base.fromBinary(s)
+END FUNCTION
+
+FUNCTION sumversions(p: Packet): Number
+    VAR r := p.version
+    FOREACH s IN p.subpackets DO
+        r := r + sumversions(s)
+    END FOREACH
+    RETURN r
+END FUNCTION
+
+FUNCTION eval(p: Packet): Number
+    CASE p.type
+        WHEN 0 DO
+            VAR r := 0
+            FOREACH s IN p.subpackets DO
+                r := r + eval(s)
+            END FOREACH
+            RETURN r
+        WHEN 1 DO
+            VAR r := 1
+            FOREACH s IN p.subpackets DO
+                r := r * eval(s)
+            END FOREACH
+            RETURN r
+        WHEN 2 DO
+            VAR r := eval(p.subpackets[0])
+            FOREACH s IN p.subpackets[1 TO LAST] DO
+                LET x := eval(s)
+                IF x < r THEN
+                    r := x
+                END IF
+            END FOREACH
+            RETURN r
+        WHEN 3 DO
+            VAR r := eval(p.subpackets[0])
+            FOREACH s IN p.subpackets[1 TO LAST] DO
+                LET x := eval(s)
+                IF x > r THEN
+                    r := x
+                END IF
+            END FOREACH
+            RETURN r
+        WHEN 4 DO
+            RETURN p.value
+        WHEN 5 DO
+            RETURN (IF eval(p.subpackets[0]) > eval(p.subpackets[1]) THEN 1 ELSE 0)
+        WHEN 6 DO
+            RETURN (IF eval(p.subpackets[0]) < eval(p.subpackets[1]) THEN 1 ELSE 0)
+        WHEN 7 DO
+            RETURN (IF eval(p.subpackets[0]) = eval(p.subpackets[1]) THEN 1 ELSE 0)
+    END CASE
+END FUNCTION
