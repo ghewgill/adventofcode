@@ -1,0 +1,58 @@
+IMPORT file
+IMPORT string.split ALIAS split
+
+TYPE Aim IS ENUM
+    hit
+    over
+    under
+END ENUM
+
+LET line := file.readLines("17.txt")[0]
+LET x0 := num(split(split(split(split(line, ":")[1], ",")[0], "=")[1], "..")[0])
+LET x1 := num(split(split(split(split(line, ":")[1], ",")[0], "=")[1], "..")[1])
+LET y0 := num(split(split(split(split(line, ":")[1], ",")[1], "=")[1], "..")[0])
+LET y1 := num(split(split(split(split(line, ":")[1], ",")[1], "=")[1], "..")[1])
+BEGIN MAIN
+    VAR maxy := 0
+    VAR count := 0
+    VAR dy := y0
+    REPEAT
+        VAR anyhit := FALSE
+        FOR dx := 0 TO x1 DO
+            VAR my: Number
+            IF fire(dx, dy, OUT my) = Aim.hit THEN
+                maxy := my
+                INC count
+                anyhit := TRUE
+            END IF
+        END FOR
+        INC dy
+    UNTIL dy > 100 AND NOT anyhit
+    print(maxy)
+    print(count)
+END MAIN
+
+FUNCTION fire(adx, ady: Number, OUT maxy: Number): Aim
+    VAR dx := adx
+    VAR dy := ady
+    VAR x := 0
+    VAR y := 0
+    maxy := 0
+    WHILE x <= x1 AND y >= y0 DO
+        x := x + dx
+        y := y + dy
+        IF dx > 0 THEN
+            DEC dx
+        ELSIF dx < 0 THEN
+            INC dx
+        END IF
+        DEC dy
+        IF y > maxy THEN
+            maxy := y
+        END IF
+        IF x0 <= x <= x1 AND y0 <= y <= y1 THEN
+            RETURN Aim.hit
+        END IF
+    END WHILE
+    RETURN (IF x < x0 THEN Aim.under ELSE Aim.over)
+END FUNCTION
