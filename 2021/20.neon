@@ -1,0 +1,46 @@
+IMPORT file
+IMPORT math
+IMPORT string
+
+LET lines := file.readLines("20.txt")
+LET map := lines[0]
+VAR image := lines[2 TO LAST]
+FOR i := 0 TO image.size()-1 DO
+    image[i] := string.repeat(".", 52) & image[i] & string.repeat(".", 52)
+END FOR
+LET dots := string.repeat(".", image[0].length())
+VAR a: Array<String> := []
+FOR n := 1 TO 52 DO
+    a.append(dots)
+END FOR
+image := a & image & a
+FOR n := 1 TO 50 DO
+    VAR newimage := image
+    FOR y := 0 TO image.size()-1 DO
+        FOR x := 0 TO image[y].length()-1 DO
+            VAR t := 0
+            FOR yy := -1 TO 1 DO
+                FOR xx := -1 TO 1 DO
+                    t := t * 2 + (IF image[math.max(0, math.min(image.size()-1, y+yy))][math.max(0, math.min(image[y].length()-1, x+xx))] = "#" THEN 1 ELSE 0)
+                END FOR
+            END FOR
+            newimage[y][x] := map[t]
+        END FOR
+    END FOR
+    image := newimage
+    IF n IN [2, 50] THEN
+        print(count(image))
+    END IF
+END FOR
+
+FUNCTION count(iamge: Array<String>): Number
+    VAR n := 0
+    FOREACH s IN image DO
+        FOREACH c IN s DO
+            IF c = "#" THEN
+                INC n
+            END IF
+        END FOREACH
+    END FOREACH
+    RETURN n
+END FUNCTION
