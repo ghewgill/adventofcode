@@ -1,0 +1,29 @@
+IMPORT file
+
+LET lines := file.readLines("01.txt")
+VAR elf := [0, 0]
+VAR max := 0
+VAR maxelf := -1
+FOREACH s IN lines DO
+    IF s = "" THEN
+        elf.append(0)
+    ELSE
+        elf[LAST] := elf[LAST] + num(s)
+        IF elf[LAST] > max THEN
+            max := elf[LAST]
+            maxelf := elf.size()
+        END IF
+    END IF
+END FOREACH
+print(max)
+
+FOR i := 1 TO elf.size()-1 DO
+    VAR j := i
+    WHILE j > 0 AND elf[j-1] > elf[j] DO
+        VAR t := elf[j-1]
+        elf[j-1] := elf[j]
+        elf[j] := t
+        DEC j
+    END WHILE
+END FOR
+print(elf[LAST-2] + elf[LAST-1] + elf[LAST])
