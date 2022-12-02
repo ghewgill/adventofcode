@@ -1,0 +1,59 @@
+IMPORT file
+
+CONSTANT Score := {
+    "X": 1,
+    "Y": 2,
+    "Z": 3,
+}
+
+CONSTANT Result := {
+    "A X": 3,
+    "A Y": 6,
+    "A Z": 0,
+    "B X": 0,
+    "B Y": 3,
+    "B Z": 6,
+    "C X": 6,
+    "C Y": 0,
+    "C Z": 3,
+}
+
+LET lines := file.readLines("02.txt")
+VAR total := 0
+FOREACH s IN lines DO
+    total := total + Score[s[2]] + Result[s]
+END FOREACH
+print(total)
+
+CONSTANT Lose := {
+    "A": "Z",
+    "B": "X",
+    "C": "Y",
+}
+
+CONSTANT Draw := {
+    "A": "X",
+    "B": "Y",
+    "C": "Z",
+}
+
+CONSTANT Win := {
+    "A": "Y",
+    "B": "Z",
+    "C": "X",
+}
+
+total := 0
+FOREACH s IN lines DO
+    VAR t := s
+    CASE s[2]
+        WHEN "X" DO
+            t[2] := Lose[s[0]]
+        WHEN "Y" DO
+            t[2] := Draw[s[0]]
+        WHEN "Z" DO
+            t[2] := Win[s[0]]
+    END CASE
+    total := total + Score[t[2]] + Result[t]
+END FOREACH
+print(total)
