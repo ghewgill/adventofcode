@@ -1,0 +1,30 @@
+IMPORT file
+IMPORT string
+
+CONSTANT Priority := " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+LET lines := file.readLines("03.txt")
+VAR sum := 0
+FOREACH s IN lines DO
+    LET len := s.length()
+    LET left := s[0 TO len/2-1]
+    LET right := s[len/2 TO LAST]
+    FOREACH c IN left DO
+        IF c IN right THEN
+            sum := sum + string.find(Priority, c)
+            EXIT FOREACH
+        END IF
+    END FOREACH
+END FOREACH
+print(sum)
+
+sum := 0
+FOR i := 0 TO lines.size()-1 STEP 3 DO
+    FOREACH c IN lines[i] DO
+        IF c IN lines[i+1] AND c IN lines[i+2] THEN
+            sum := sum + string.find(Priority, c)
+            EXIT FOREACH
+        END IF
+    END FOREACH
+END FOR
+print(sum)
