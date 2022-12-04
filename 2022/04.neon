@@ -1,0 +1,21 @@
+IMPORT file
+IMPORT string
+
+LET lines := file.readLines("04.txt")
+VAR count1 := 0
+VAR count2 := 0
+FOREACH s IN lines DO
+    LET pair := string.split(s, ",")
+    LET a1 := num(string.split(pair[0], "-")[0])
+    LET a2 := num(string.split(pair[0], "-")[1])
+    LET b1 := num(string.split(pair[1], "-")[0])
+    LET b2 := num(string.split(pair[1], "-")[1])
+    IF a1 <= b1 <= b2 <= a2 OR b1 <= a1 <= a2 <= b2 THEN
+        INC count1
+    END IF
+    IF a1 <= b1 <= a2 OR b1 <= a1 <= b2 THEN
+        INC count2
+    END IF
+END FOREACH
+print(count1)
+print(count2)
