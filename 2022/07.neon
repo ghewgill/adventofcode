@@ -1,0 +1,45 @@
+IMPORT file
+IMPORT string
+
+VAR Dirs: Array<Number> := [0]
+VAR Path: Array<Number> := [0]
+
+LET lines := file.readLines("07.txt")
+FOREACH s IN lines DO
+    IF s = "$ cd /" THEN
+        Path := [0]
+    ELSIF s = "$ cd .." THEN
+        Path.resize(Path.size() - 1)
+    ELSIF string.hasPrefix(s, "$ cd ") THEN
+        Dirs.append(0)
+        Path.append(Dirs.size() - 1)
+    ELSIF s = "$ ls" THEN
+        -- pass
+    ELSE
+        LET a := string.split(s, " ")
+        IF a[0] <> "dir" THEN
+            LET size := num(a[0])
+            FOREACH p IN Path DO
+                Dirs[p] := Dirs[p] + size
+            END FOREACH
+        END IF
+    END IF
+END FOREACH
+VAR r := 0
+FOREACH d IN Dirs DO
+    IF d <= 100000 THEN
+        r := r + d
+    END IF
+END FOREACH
+print(r)
+
+LET needed := 30000000 - (70000000 - Dirs[0])
+VAR min := 999999999
+FOREACH d IN Dirs DO
+    IF d >= needed THEN
+        IF d < min THEN
+            min := d
+        END IF
+    END IF
+END FOREACH
+print(min)
