@@ -1,0 +1,73 @@
+IMPORT file
+
+LET lines := file.readLines("08.txt")
+VAR trees: Array<Array<Number>> := []
+FOREACH s IN lines DO
+    VAR a: Array<Number> := []
+    FOREACH c IN s DO
+        a.append(num(c))
+    END FOREACH
+    trees.append(a)
+END FOREACH
+VAR count := 0
+FOREACH row IN trees INDEX r DO
+    FOREACH tree IN row INDEX c DO
+        IF visible(r, c, -1,  0) OR
+           visible(r, c,  1,  0) OR
+           visible(r, c,  0, -1) OR
+           visible(r, c,  0,  1) THEN
+            INC count
+        END IF
+    END FOREACH
+END FOREACH
+print(count)
+VAR bestscore := 0
+FOREACH row IN trees INDEX r DO
+    FOREACH tree IN row INDEX c DO
+        LET score := 
+            getscore(r, c, -1,  0) *
+            getscore(r, c,  1,  0) *
+            getscore(r, c,  0, -1) *
+            getscore(r, c,  0,  1)
+        IF score > bestscore THEN
+            bestscore := score
+        END IF
+    END FOREACH
+END FOREACH
+print(bestscore)
+
+FUNCTION visible(r, c: Number, dr, dc: Number): Boolean
+    VAR y := r
+    VAR x := c
+    VAR t := trees[r, c]
+    LOOP
+        y := y + dr
+        x := x + dc
+        CHECK 0 <= y <= 98 AND 0 <= x <= 98 ELSE
+            EXIT LOOP
+        END CHECK
+        IF trees[y, x] >= t THEN
+            RETURN FALSE
+        END IF
+    END LOOP
+    RETURN TRUE
+END FUNCTION
+
+FUNCTION getscore(r, c: Number, dr, dc: Number): Number
+    VAR y := r
+    VAR x := c
+    VAR t := trees[r, c]
+    VAR n := 0
+    LOOP
+        y := y + dr
+        x := x + dc
+        CHECK 0 <= y <= 98 AND 0 <= x <= 98 ELSE
+            EXIT LOOP
+        END CHECK
+        INC n
+        IF trees[y, x] >= t THEN
+            EXIT LOOP
+        END IF
+    END LOOP
+    RETURN n
+END FUNCTION
