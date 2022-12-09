@@ -1,0 +1,58 @@
+IMPORT file
+IMPORT math
+
+LET lines := file.readLines("09.txt")
+VAR hx := 0
+VAR hy := 0
+VAR tx := 0
+VAR ty := 0
+VAR seen: Dictionary<Boolean> := {}
+FOREACH s IN lines DO
+    LET dir := s[0]
+    LET count := num(s[2 TO LAST])
+    FOR i := 1 TO count DO
+        CASE dir
+            WHEN "L" DO
+                DEC hx
+            WHEN "R" DO
+                INC hx
+            WHEN "D" DO
+                DEC hy
+            WHEN "U" DO
+                INC hy
+        END CASE
+        IF math.abs(hx-tx) >= 2 OR math.abs(hy-ty) >= 2 THEN
+            tx := tx + math.sign(hx - tx)
+            ty := ty + math.sign(hy - ty)
+        END IF
+        seen["\(tx),\(ty)"] := TRUE
+    END FOR
+END FOREACH
+print(seen.size())
+
+VAR rope := [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]
+seen := {}
+FOREACH s IN lines DO
+    LET dir := s[0]
+    LET count := num(s[2 TO LAST])
+    FOR i := 1 TO count DO
+        CASE dir
+            WHEN "L" DO
+                DEC rope[0][0]
+            WHEN "R" DO
+                INC rope[0][0]
+            WHEN "D" DO
+                DEC rope[0][1]
+            WHEN "U" DO
+                INC rope[0][1]
+        END CASE
+        FOR j := 1 TO rope.size()-1 DO
+            IF math.abs(rope[j-1][0]-rope[j][0]) >= 2 OR math.abs(rope[j-1][1]-rope[j][1]) >= 2 THEN
+                rope[j][0] := rope[j][0] + math.sign(rope[j-1][0] - rope[j][0])
+                rope[j][1] := rope[j][1] + math.sign(rope[j-1][1] - rope[j][1])
+            END IF
+        END FOR
+        seen["\(rope[LAST][0]),\(rope[LAST][1])"] := TRUE
+    END FOR
+END FOREACH
+print(seen.size())
