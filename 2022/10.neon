@@ -1,0 +1,36 @@
+IMPORT file
+IMPORT math
+IMPORT string
+
+LET lines := file.readLines("10.txt")
+VAR cycle := 1
+VAR level := 1
+VAR total := 0
+VAR out := ["", "", "", "", "", ""]
+FOREACH s IN lines INDEX i DO
+    LET a := string.split(s, " ")
+    nextcycle()
+    CASE a[0]
+        WHEN "noop" DO
+            -- pass
+        WHEN "addx" DO
+            nextcycle()
+            level := level + num(a[1])
+    END CASE
+END FOREACH
+print(total)
+FOREACH s IN out DO
+    print(s)
+END FOREACH
+
+FUNCTION nextcycle()
+    LET x := (cycle - 1) MOD 40
+    LET y := (cycle - 1) INTDIV 40
+    IF math.abs(level - x) <= 1 THEN
+        out[y][x] := "#"
+    END IF
+    IF cycle MOD 40 = 20 THEN
+        total := total + level * cycle
+    END IF
+    INC cycle
+END FUNCTION
