@@ -1,0 +1,113 @@
+IMPORT file
+IMPORT regex
+IMPORT string
+
+TYPE Operation IS CHOICE
+    multiply: Number
+    add: Number
+    square
+END CHOICE
+
+TYPE Monkey IS RECORD
+    items: Array<Number>
+    operation: Operation
+    test: Number
+    if_true: Number
+    if_false: Number
+END RECORD
+
+LET lines := file.readLines("11.txt")
+VAR monkeys: Array<Monkey> := []
+FOREACH s IN lines DO
+    IF s = "" THEN
+        NEXT FOREACH
+    END IF
+    IF regex.search("^Monkey", s) ISA regex.Result.match THEN
+        monkeys.append(Monkey())
+    ELSE
+        VAR r := regex.search("Starting items: (.*)", s)
+        IF r ISA regex.Result.match THEN
+            LET a := string.split(r.match[1].string, ", ")
+            FOREACH i IN a DO
+                monkeys[LAST].items.append(num(i))
+            END FOREACH
+        ELSE
+            r := regex.search("Operation: new = (.*)", s)
+            IF r ISA regex.Result.match THEN
+                VAR rr := regex.search("old \\* (\\d+)", r.match[1].string)
+                IF rr ISA regex.Result.match THEN
+                    monkeys[LAST].operation := Operation.multiply(num(rr.match[1].string))
+                ELSE
+                    rr := regex.search("old \\+ (\\d+)", r.match[1].string)
+                    IF rr ISA regex.Result.match THEN
+                        monkeys[LAST].operation := Operation.add(num(rr.match[1].string))
+                    ELSE
+                        rr := regex.search("old \\* old", r.match[1].string)
+                        IF rr ISA regex.Result.match THEN
+                            monkeys[LAST].operation := Operation.square
+                        ELSE
+                            PANIC "huh"
+                        END IF
+                    END IF
+                END IF
+            ELSE
+                r := regex.search("Test: divisible by (\\d+)", s)
+                IF r ISA regex.Result.match THEN
+                    monkeys[LAST].test := num(r.match[1].string)
+                ELSE
+                    r := regex.search("If true: throw to monkey (\\d+)", s)
+                    IF r ISA regex.Result.match THEN
+                        monkeys[LAST].if_true := num(r.match[1].string)
+                    ELSE
+                        r := regex.search("If false: throw to monkey (\\d+)", s)
+                        IF r ISA regex.Result.match THEN
+                            monkeys[LAST].if_false := num(r.match[1].string)
+                        ELSE
+                            PANIC "huh"
+                        END IF
+                    END IF
+                END IF
+            END IF
+        END IF
+    END IF
+END FOREACH
+VAR bigmod := 1
+FOREACH m IN monkeys DO
+    bigmod := bigmod * m.test
+END FOREACH
+VAR inspections: Array<Number> := []
+FOR round := 1 TO 10000 DO
+    FOR m := 0 TO monkeys.size()-1 DO
+        WHILE monkeys[m].items.size() > 0 DO
+            INC inspections[m]
+            VAR item := monkeys[m].items[FIRST]
+            monkeys[m].items := monkeys[m].items[1 TO LAST]
+            LET op := monkeys[m].operation
+            CASE op
+                WHEN ISA Operation.multiply DO
+                    item := item * op.multiply
+                WHEN ISA Operation.add DO
+                    item := item + op.add
+                WHEN ISA Operation.square DO
+                    item := item * item
+            END CASE
+            --item := item INTDIV 3
+            item := item MOD bigmod
+            IF item MOD monkeys[m].test = 0 THEN
+                monkeys[monkeys[m].if_true].items.append(item)
+            ELSE
+                monkeys[monkeys[m].if_false].items.append(item)
+            END IF
+        END WHILE
+    END FOR
+END FOR
+FOR i := 1 TO inspections.size()-1 DO
+    VAR j := i
+    WHILE j > 0 AND inspections[j-1] > inspections[j] DO
+        VAR t := inspections[j-1]
+        inspections[j-1] := inspections[j]
+        inspections[j] := t
+        DEC j
+    END WHILE
+END FOR
+print(inspections[LAST-1] * inspections[LAST])
