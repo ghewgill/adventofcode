@@ -1,0 +1,101 @@
+IMPORT file
+IMPORT string
+
+VAR lines := file.readLines("12.txt")
+VAR starty, startx: Number := 0
+VAR endy, endx: Number := 0
+FOR i := 0 TO lines.size()-1 DO
+    FOR j := 0 TO lines[0].length()-1 DO
+        IF lines[i,j] = "S" THEN
+            starty := i
+            startx := j
+            lines[i,j] := "a"
+        ELSIF lines[i,j] = "E" THEN
+            endy := i
+            endx := j
+            lines[i,j] := "z"
+        END IF
+    END FOR
+END FOR
+print(walk(starty, startx))
+print(walk2(endy, endx))
+
+FUNCTION walk(sy, sx: Number): Number
+    VAR seen: Array<Array<Boolean>> := []
+
+    FUNCTION try(p: Array<Number>, dy, dx: Number, INOUT newa: Array<Array<Number>>): Boolean
+        LET t := [p[0] + dy, p[1] + dx]
+        IF 0 <= t[0] < lines.size() AND 0 <= t[1] < lines[0].length() AND NOT seen[t[0],t[1]] THEN
+            IF t[0] = endy AND t[1] = endx THEN
+                RETURN TRUE
+            END IF
+            IF lines[t[0],t[1]] <= string.fromCodePoint(string.toCodePoint(lines[p[0],p[1]]) + 1) THEN
+                seen[t[0],t[1]] := TRUE
+                newa.append(t)
+            END IF
+        END IF
+        RETURN FALSE
+    END FUNCTION
+
+    ASSERT lines[sy,sx] = "a"
+    FOR i := 0 TO lines.size()-1 DO
+        FOR j := 0 TO lines[0].length()-1 DO
+            seen[i,j] := FALSE
+        END FOR
+    END FOR
+    seen[sy,sx] := TRUE
+    VAR a := [[sy,sx]]
+    VAR steps := 1
+    LOOP
+        VAR newa: Array<Array<Number>> := []
+        FOREACH p IN a DO
+            IF try(p, -1,  0, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  1,  0, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  0, -1, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  0,  1, INOUT newa) THEN EXIT LOOP END IF
+        END FOREACH
+        a := newa
+        INC steps
+    END LOOP
+    RETURN steps
+END FUNCTION
+
+FUNCTION walk2(sy, sx: Number): Number
+    VAR seen: Array<Array<Boolean>> := []
+
+    FUNCTION try(p: Array<Number>, dy, dx: Number, INOUT newa: Array<Array<Number>>): Boolean
+        LET t := [p[0] + dy, p[1] + dx]
+        IF 0 <= t[0] < lines.size() AND 0 <= t[1] < lines[0].length() AND NOT seen[t[0],t[1]] THEN
+            IF lines[t[0],t[1]] >= string.fromCodePoint(string.toCodePoint(lines[p[0],p[1]]) - 1) THEN
+                IF lines[t[0],t[1]] = "a" THEN
+                    RETURN TRUE
+                END IF
+                seen[t[0],t[1]] := TRUE
+                newa.append(t)
+            END IF
+        END IF
+        RETURN FALSE
+    END FUNCTION
+
+    ASSERT lines[sy,sx] = "z"
+    FOR i := 0 TO lines.size()-1 DO
+        FOR j := 0 TO lines[0].length()-1 DO
+            seen[i,j] := FALSE
+        END FOR
+    END FOR
+    seen[sy,sx] := TRUE
+    VAR a := [[sy,sx]]
+    VAR steps := 1
+    LOOP
+        VAR newa: Array<Array<Number>> := []
+        FOREACH p IN a DO
+            IF try(p, -1,  0, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  1,  0, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  0, -1, INOUT newa) THEN EXIT LOOP END IF
+            IF try(p,  0,  1, INOUT newa) THEN EXIT LOOP END IF
+        END FOREACH
+        a := newa
+        INC steps
+    END LOOP
+    RETURN steps
+END FUNCTION
