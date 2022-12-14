@@ -1,0 +1,106 @@
+IMPORT file
+IMPORT string
+
+LET lines := file.readLines("14.txt")
+VAR grock: Array<Array<Boolean>> := []
+FOREACH s IN lines DO
+    LET points := string.split(s, " -> ")
+    VAR last: Array<Number> := []
+    FOREACH p IN points INDEX i DO
+        LET t := string.split(p, ",")
+        LET a := [num(t[0]), num(t[1])]
+        IF i > 0 THEN
+            IF a[1] = last[1] THEN
+                IF a[0] >= last[0] THEN
+                    FOR j := last[0] TO a[0] DO
+                        grock[a[1],j] := TRUE
+                    END FOR
+                ELSE
+                    FOR j := last[0] TO a[0] STEP -1 DO
+                        grock[a[1],j] := TRUE
+                    END FOR
+                END IF
+            ELSIF a[0] = last[0] THEN
+                IF a[1] >= last[1] THEN
+                    FOR j := last[1] TO a[1] DO
+                        grock[j,a[0]] := TRUE
+                    END FOR
+                ELSE
+                    FOR j := last[1] TO a[1] STEP -1 DO
+                        grock[j,a[0]] := TRUE
+                    END FOR
+                END IF
+            ELSE
+                PANIC "huh"
+            END IF
+        END IF
+        last := a
+    END FOREACH
+END FOREACH
+--FOREACH row IN grock DO
+--    VAR s := ""
+--    FOREACH c IN row[440 TO LAST] DO
+--        s.append((IF c THEN "#" ELSE "."))
+--    END FOREACH
+--    print(s)
+--END FOREACH
+part1(grock)
+part2(grock)
+
+FUNCTION part1(input: Array<Array<Boolean>>)
+    VAR rock := input
+    VAR count := 0
+    LOOP LABEL all
+        VAR p := [500,0]
+        WHILE p[1]+1 < rock.size() DO
+            IF p[0] >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]] THEN
+                INC p[1]
+            ELSIF p[0]-1 >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]-1] THEN
+                INC p[1]
+                DEC p[0]
+            ELSIF p[0]+1 >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]+1] THEN
+                INC p[1]
+                INC p[0]
+            ELSE
+                rock[p[1],p[0]] := TRUE
+                INC count
+                NEXT all
+            END IF
+        END WHILE
+        EXIT all
+    END LOOP
+    print(count)
+END FUNCTION
+
+FUNCTION part2(input: Array<Array<Boolean>>)
+    VAR rock := input
+    rock.append([])
+    VAR count := 0
+    LOOP LABEL all
+        VAR p := [500,0]
+        IF p[0] < rock[0].size() AND rock[p[1],p[0]] THEN
+            EXIT all
+        END IF
+        LOOP
+            IF p[1]+1 >= rock.size() THEN
+                rock[p[1],p[0]] := TRUE
+                INC count
+                NEXT all
+            ELSIF p[0] >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]] THEN
+                INC p[1]
+            ELSIF p[0]-1 >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]-1] THEN
+                INC p[1]
+                DEC p[0]
+            ELSIF p[0]+1 >= rock[p[1]+1].size() OR NOT rock[p[1]+1,p[0]+1] THEN
+                INC p[1]
+                INC p[0]
+            ELSE
+                rock[p[1],p[0]] := TRUE
+                INC count
+                NEXT all
+            END IF
+        END LOOP
+        EXIT all
+    END LOOP
+    print(count)
+END FUNCTION
