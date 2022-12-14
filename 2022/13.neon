@@ -1,0 +1,126 @@
+IMPORT file
+
+TYPE Element IS CHOICE
+    number: Number
+    array: Array<Element>
+END CHOICE
+
+LET lines := file.readLines("13.txt")
+VAR messages: Array<Element> := []
+FOREACH s IN lines DO
+    IF s <> "" THEN
+        VAR t := 0
+        messages.append(parse(s, INOUT t))
+    END IF
+END FOREACH
+VAR sum := 0
+FOR i := 0 TO messages.size()-1 STEP 2 DO
+    IF compare(messages[i], messages[i+1]) >= 0 THEN
+        sum := sum + (i/2+1)
+    END IF
+END FOR
+print(sum)
+
+LET div2 := Element.array([Element.array([Element.number(2)])])
+LET div6 := Element.array([Element.array([Element.number(6)])])
+messages.append(div2)
+messages.append(div6)
+FOR i := 1 TO messages.size()-1 DO
+    VAR j := i
+    WHILE j >0 AND compare(messages[j-1], messages[j]) < 0 DO
+        VAR t := messages[j-1]
+        messages[j-1] := messages[j]
+        messages[j] := t
+        DEC j
+    END WHILE
+END FOR
+VAR i2, i6: Number := -1
+FOREACH m IN messages INDEX i DO
+    IF m = div2 THEN
+        i2 := i+1
+    END IF
+    IF m = div6 THEN
+        i6 := i+1
+    END IF
+END FOREACH
+print(i2 * i6)
+
+FUNCTION parse(s: String, INOUT i: Number): Element
+    IF s[i] = "[" THEN
+        INC i
+        VAR a: Array<Element> := []
+        IF s[i] = "]" THEN
+            RETURN Element.array(a)
+        END IF
+        LOOP
+            a.append(parse(s, INOUT i))
+            IF s[i] = "]" THEN
+                INC i
+                EXIT LOOP
+            END IF
+            ASSERT s[i] = ","
+            INC i
+        END LOOP
+        RETURN Element.array(a)
+    ELSE
+        LET start := i
+        WHILE s[i] IN "0123456789" DO
+            INC i
+        END WHILE
+        RETURN Element.number(num(s[start TO i-1]))
+    END IF
+END FUNCTION
+
+FUNCTION compare(a, b: Element): Number
+    IF a ISA Element.number THEN
+        IF b ISA Element.number THEN
+            IF a.number < b.number THEN
+                RETURN 1
+            ELSIF a.number = b.number THEN
+                RETURN 0
+            END IF
+            RETURN -1
+        END IF
+        RETURN compare(Element.array([a]), b)
+    END IF
+    IF a ISA Element.array THEN
+        IF b ISA Element.array THEN
+            VAR i := 0
+            LOOP
+                IF i >= a.array.size() AND i >= b.array.size() THEN
+                    RETURN 0
+                END IF
+                IF i >= a.array.size() THEN
+                    RETURN 1
+                END IF
+                IF i >= b.array.size() THEN
+                    RETURN -1
+                END IF
+                LET r := compare(a.array[i], b.array[i])
+                IF r <> 0 THEN
+                    RETURN r
+                END IF
+                INC i
+            END LOOP
+        END IF
+        RETURN compare(a, Element.array([b]))
+    END IF
+    PANIC "huh"
+END FUNCTION
+
+FUNCTION strify(a: Element): String
+    CASE a
+        WHEN ISA Element.number DO
+            RETURN str(a.number)
+        WHEN ISA Element.array DO
+            VAR r := "["
+            FOREACH x IN a.array INDEX i DO
+                IF i > 0 THEN
+                    r.append(",")
+                END IF
+                r.append(strify(x))
+            END FOREACH
+            r.append("]")
+            RETURN r
+    END CASE
+END FUNCTION
